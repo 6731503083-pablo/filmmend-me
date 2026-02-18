@@ -13,7 +13,7 @@ import 'route_names.dart';
 import 'login_required_screen.dart';
 
 // Mock authentication state
-bool isLoggedIn = false;
+ValueNotifier<bool> isLoggedIn = ValueNotifier(false);
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 

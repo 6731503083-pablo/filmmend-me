@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleSignIn() {
-    isLoggedIn = true;
+    isLoggedIn.value = true;
     context.go(RouteNames.home);
   }
 

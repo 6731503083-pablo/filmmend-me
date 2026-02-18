@@ -22,7 +22,9 @@ class WatchlistScreen extends StatelessWidget {
           style: TextStyle(color: AppColors.textPrimary),
         ),
       ),
-      body: !isLoggedIn
+      body: ValueListenableBuilder<bool>(
+        valueListenable: isLoggedIn,
+        builder: (context, loggedIn, _) => !loggedIn
           ? const LoginRequiredView(
               icon: Icons.bookmark_border,
               subtitle: 'Sign in to save and view your favorite movies',
@@ -49,6 +51,7 @@ class WatchlistScreen extends StatelessWidget {
                 );
               },
             ),
+          ),
     );
   }
 }

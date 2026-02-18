@@ -181,7 +181,7 @@ class MovieDetailScreen extends StatelessWidget {
       width: double.infinity,
       child: AdaptiveButton(
         onPressed: () {
-          if (isLoggedIn) {
+          if (isLoggedIn.value) {
             _showSuccessDialog(context);
           } else {
             context.push(RouteNames.login);

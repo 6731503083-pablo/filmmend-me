@@ -22,13 +22,16 @@ class ProfileScreen extends StatelessWidget {
           style: TextStyle(color: AppColors.textPrimary),
         ),
       ),
-      body: Center(
-        child: isLoggedIn
-            ? _buildLoggedInView(context)
-            : const LoginRequiredView(
-                icon: Icons.person_outline,
-                subtitle: 'Please log in to view your profile',
-              ),
+      body: ValueListenableBuilder<bool>(
+        valueListenable: isLoggedIn,
+        builder: (context, loggedIn, _) => Center(
+          child: loggedIn
+              ? _buildLoggedInView(context)
+              : const LoginRequiredView(
+                  icon: Icons.person_outline,
+                  subtitle: 'Please log in to view your profile',
+                ),
+        ),
       ),
     );
   }
@@ -158,7 +161,7 @@ class ProfileScreen extends StatelessWidget {
               width: double.infinity,
               child: AdaptiveButton(
                 onPressed: () {
-                  isLoggedIn = false;
+                  isLoggedIn.value = false;
                   context.pop();
                   context.go(RouteNames.home);
                 },

@@ -27,7 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _handleRegister() {
-    isLoggedIn = true;
+    isLoggedIn.value = true;
     context.go(RouteNames.home);
   }
 
