@@ -12,7 +12,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? selectedMood;
-  double availableTime = 120;
+  double availableTime = 90;
 
   final List<Map<String, dynamic>> moods = [
     {'label': 'Chill', 'icon': Icons.air},
@@ -63,6 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
             const SizedBox(height: 24),
+
+            // Mood Grid (4 columns x 2 rows = 8 moods)
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -70,11 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisCount: 4,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
+                childAspectRatio: 0.85,
               ),
               itemCount: moods.length,
               itemBuilder: (context, index) {
                 final mood = moods[index];
                 final isSelected = selectedMood == mood['label'];
+
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -88,15 +92,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.blue
-                              : const Color(0xFF252A3D),
+                          color: const Color(0xFF252A3D),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
                                 ? Colors.blue
                                 : Colors.transparent,
-                            width: 2,
+                            width: 3,
                           ),
                         ),
                         child: Icon(
@@ -105,13 +107,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           size: 28,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Flexible(
                         child: Text(
                           mood['label'],
                           style: TextStyle(
                             color: isSelected ? Colors.blue : Colors.white70,
                             fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
@@ -123,7 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+
             const SizedBox(height: 32),
+
+            // Time Slider Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -148,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             AdaptiveSlider(
               value: availableTime,
-              min: 30,
+              min: 0,
               max: 180,
               onChanged: (value) {
                 setState(() {
@@ -156,24 +164,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 });
               },
             ),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Short (30m)',
+                  '0m',
                   style: TextStyle(color: Colors.white54, fontSize: 12),
                 ),
                 Text(
-                  'Feature (90m)',
+                  '90m',
                   style: TextStyle(color: Colors.white54, fontSize: 12),
                 ),
                 Text(
-                  'Epic (180m+)',
+                  '180m',
                   style: TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),
+
             const SizedBox(height: 40),
+
+            // Recommend Movie Button
             SizedBox(
               width: double.infinity,
               child: AdaptiveButton(
@@ -188,7 +199,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: AdaptiveButtonStyle.filled,
               ),
             ),
+
             const SizedBox(height: 12),
+
+            // Random Pick Button (bonus feature)
             SizedBox(
               width: double.infinity,
               child: AdaptiveButton(

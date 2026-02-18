@@ -1,13 +1,89 @@
-import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/widgets/movie_card.dart';
 
 class RecommendationResultsScreen extends StatelessWidget {
   const RecommendationResultsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Mock movie data (hardcoded)
+    final mockMovies = [
+      {
+        'id': '1',
+        'title': 'Inception',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
+        'rating': 8.8,
+        'runtime': '2h 28m',
+        'genres': ['Sci-Fi', 'Action', 'Thriller'],
+      },
+      {
+        'id': '2',
+        'title': 'The Grand Budapest Hotel',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/eWdyYQreja6JGCzqHWXpWHDrrPo.jpg',
+        'rating': 8.1,
+        'runtime': '1h 40m',
+        'genres': ['Comedy', 'Drama'],
+      },
+      {
+        'id': '3',
+        'title': 'Blade Runner 2049',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg',
+        'rating': 8.0,
+        'runtime': '2h 44m',
+        'genres': ['Sci-Fi', 'Mystery', 'Thriller'],
+      },
+      {
+        'id': '4',
+        'title': 'Her',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/eCOtqtfvn7mxGl6nfmq4b1exJRc.jpg',
+        'rating': 8.0,
+        'runtime': '2h 06m',
+        'genres': ['Romance', 'Sci-Fi', 'Drama'],
+      },
+      {
+        'id': '5',
+        'title': 'Parasite',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
+        'rating': 8.5,
+        'runtime': '2h 12m',
+        'genres': ['Thriller', 'Drama', 'Comedy'],
+      },
+      {
+        'id': '6',
+        'title': 'Interstellar',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
+        'rating': 8.7,
+        'runtime': '2h 49m',
+        'genres': ['Sci-Fi', 'Adventure', 'Drama'],
+      },
+      {
+        'id': '7',
+        'title': 'The Shawshank Redemption',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg',
+        'rating': 9.3,
+        'runtime': '2h 22m',
+        'genres': ['Drama', 'Crime'],
+      },
+      {
+        'id': '8',
+        'title': 'Spirited Away',
+        'posterUrl':
+            'https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg',
+        'rating': 8.6,
+        'runtime': '2h 05m',
+        'genres': ['Animation', 'Fantasy', 'Family'],
+      },
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1D2E),
       appBar: AppBar(
@@ -17,175 +93,39 @@ class RecommendationResultsScreen extends StatelessWidget {
           'Top Picks for Your Mood',
           style: TextStyle(color: Colors.white),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.pop(),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.tune, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              // Future: Filter options
+            },
           ),
         ],
       ),
-      body: ListView(
+      body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        children: [
-          _buildMovieCard(
-            context,
-            id: '1',
-            title: 'Inception',
-            rating: '4.8',
-            votes: '94k',
-            duration: '2h 28m',
-            year: '2010',
-            genres: ['Sci-Fi', 'Action'],
-          ),
-          _buildMovieCard(
-            context,
-            id: '2',
-            title: 'The Grand Budapest Hotel',
-            rating: '4.5',
-            votes: '18k',
-            duration: '1h 40m',
-            year: '2014',
-            genres: ['Comedy', 'Drama'],
-          ),
-          _buildMovieCard(
-            context,
-            id: '3',
-            title: 'Blade Runner 2049',
-            rating: '4.7',
-            votes: '15k',
-            duration: '2h 44m',
-            year: '2017',
-            genres: ['Sci-Fi', 'Mystery'],
-          ),
-          _buildMovieCard(
-            context,
-            id: '4',
-            title: 'Her',
-            rating: '4.3',
-            votes: '11k',
-            duration: '2h 06m',
-            year: '2013',
-            genres: ['Romance', 'Sci-Fi'],
-          ),
-        ],
-      ),
-    );
-  }
+        itemCount: mockMovies.length,
+        itemBuilder: (context, index) {
+          final movie = mockMovies[index];
 
-  Widget _buildMovieCard(
-    BuildContext context, {
-    required String id,
-    required String title,
-    required String rating,
-    required String votes,
-    required String duration,
-    required String year,
-    required List<String> genres,
-  }) {
-    return AdaptiveCard(
-      color: const Color(0xFF252A3D),
-      padding: EdgeInsets.zero,
-      child: InkWell(
-        onTap: () {
-          context.go(
-            '${RouteNames.home}/${RouteNames.recommendations}/${RouteNames.movieDetail}/$id',
+          return MovieCard(
+            title: movie['title'] as String,
+            posterUrl: movie['posterUrl'] as String,
+            rating: movie['rating'] as double,
+            runtime: movie['runtime'] as String,
+            genres: movie['genres'] as List<String>,
+            onTap: () {
+              // Navigate to movie detail with ID
+              context.go(
+                '${RouteNames.home}/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie['id']}',
+              );
+            },
           );
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 80,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.movie, color: Colors.white54, size: 40),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$rating ($votes)',
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          color: Colors.white54,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          duration,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(width: 12),
-                        const Icon(
-                          Icons.calendar_today,
-                          color: Colors.white54,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          year,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: genres
-                          .map(
-                            (genre) => Chip(
-                              label: Text(
-                                genre,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              backgroundColor: Colors.blue.withValues(
-                                alpha: 0.3,
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.bookmark_border, color: Colors.white54),
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

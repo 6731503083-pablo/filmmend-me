@@ -24,11 +24,11 @@ A modern Flutter movie recommendation app featuring native iOS 26 UI components 
 ## 📦 Key Dependencies
 
 ```yaml
-adaptive_platform_ui: ^0.1.101  # Native iOS 26 components
-go_router: ^14.6.2              # Declarative routing
-flutter_riverpod: ^2.7.1        # State management
-firebase_core: ^3.11.1          # Firebase integration
-firebase_auth: ^5.4.1           # Authentication
+adaptive_platform_ui: ^0.1.101 # Native iOS 26 components
+go_router: ^14.6.2 # Declarative routing
+flutter_riverpod: ^2.7.1 # State management
+firebase_core: ^3.11.1 # Firebase integration
+firebase_auth: ^5.4.1 # Authentication
 ```
 
 ## 🎨 Adaptive UI Components Used
@@ -42,6 +42,7 @@ firebase_auth: ^5.4.1           # Authentication
 ## 📱 Screenshots
 
 The app features a beautiful dark theme with iOS 26 native components, including:
+
 - Liquid glass bottom navigation bar
 - Native iOS button styles
 - Smooth animations and transitions
@@ -59,27 +60,32 @@ The app features a beautiful dark theme with iOS 26 native components, including
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/6731503083-pablo/filmmend-me.git
 cd filmmend-me
 ```
 
 2. Install dependencies:
+
 ```bash
 flutter pub get
 ```
 
 3. Run the app:
+
 ```bash
 flutter run
 ```
 
 For iOS Simulator:
+
 ```bash
 flutter run -d ios
 ```
 
 For Android Emulator:
+
 ```bash
 flutter run -d android
 ```
@@ -111,17 +117,20 @@ lib/
 ## 🎯 Key Features Implementation
 
 ### Native iOS 26 Bottom Navigation
+
 - Uses `AdaptiveBottomNavigationBar` with `useNativeBottomBar: true`
 - Liquid glass effect on iOS 26+
 - Falls back to standard navigation on older versions
 
 ### Routing Architecture
+
 - Declarative routing with GoRouter
 - StatefulShellRoute for persistent bottom navigation
 - Protected routes with inline login prompts
 - Parent navigator keys for full-screen navigation
 
 ### Authentication State
+
 - Mock authentication system (ready for Firebase integration)
 - Login required prompts on protected screens
 - Maintains navigation context
