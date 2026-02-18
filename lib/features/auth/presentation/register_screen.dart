@@ -13,13 +13,14 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -32,102 +33,103 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return Scaffold(
-      body: GradientBackground(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                const GlassBackButton(),
-                Expanded(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Create Account',
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              height: 1.2,
-                            ),
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          const MovieMosaicHeader(heightFactor: 0.46),
+          SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: size.height),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: size.height * 0.26),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const FilmmendBrandLogo(imageSize: 30, fontSize: 22),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Sign Up',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Join us and discover movies that match your mood',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.textSecondary,
-                              height: 1.5,
-                            ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Create an account to continue.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
                           ),
-                          const SizedBox(height: 50),
-                          AppTextField(
-                            controller: _nameController,
-                            hint: 'Full Name',
-                            icon: Icons.person_outline,
+                        ),
+                        const SizedBox(height: 32),
+                        AuthField(
+                          controller: _usernameController,
+                          hint: 'Username',
+                          icon: Icons.person_outline_rounded,
+                        ),
+                        const SizedBox(height: 14),
+                        AuthField(
+                          controller: _emailController,
+                          hint: 'Email',
+                          icon: Icons.mail_outline_rounded,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 14),
+                        AuthField(
+                          controller: _passwordController,
+                          hint: 'Password',
+                          icon: Icons.lock_outline_rounded,
+                          obscure: _obscurePassword,
+                          onToggleObscure: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
                           ),
-                          const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _emailController,
-                            hint: 'Email',
-                            icon: Icons.email_outlined,
-                            keyboardType: TextInputType.emailAddress,
-                          ),
-                          const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _passwordController,
-                            hint: 'Password',
-                            icon: Icons.lock_outline,
-                            obscureText: true,
-                          ),
-                          const SizedBox(height: 32),
-                          GradientButton(
-                            text: 'Sign Up',
-                            onPressed: _handleRegister,
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 32),
+                        AccentButton(text: 'Sign Up', onPressed: _handleRegister),
+                        const SizedBox(height: 22),
+                        _buildSignInLink(),
+                        const SizedBox(height: 48),
+                      ],
                     ),
                   ),
-                ),
-                _buildSignInLink(),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildSignInLink() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Already have an account? ',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
-          ),
-          GestureDetector(
-            onTap: () => context.go(RouteNames.login),
-            child: const Text(
-              'Sign In',
+    return GestureDetector(
+      onTap: () => context.go(RouteNames.login),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: const TextSpan(
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          children: [
+            TextSpan(text: 'Already have an account? Go to the '),
+            TextSpan(
+              text: 'Login Page',
               style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 15,
+                color: Color(0xFFE87A4A),
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-        ],
+            TextSpan(text: '.'),
+          ],
+        ),
       ),
     );
   }
