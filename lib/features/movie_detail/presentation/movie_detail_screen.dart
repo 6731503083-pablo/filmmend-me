@@ -190,7 +190,7 @@ class MovieDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Rating and year
                     Row(
                       children: [
@@ -206,7 +206,11 @@ class MovieDetailScreen extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.star, size: 16, color: Colors.black),
+                              const Icon(
+                                Icons.star,
+                                size: 16,
+                                color: Colors.black,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 (movie['rating'] as double).toStringAsFixed(1),
@@ -246,7 +250,11 @@ class MovieDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Icon(Icons.access_time, size: 16, color: Colors.white54),
+                        const Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: Colors.white54,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           movie['runtime'] as String,
@@ -257,9 +265,9 @@ class MovieDetailScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Add to Watchlist button
                     SizedBox(
                       width: double.infinity,
@@ -276,9 +284,9 @@ class MovieDetailScreen extends StatelessWidget {
                         style: AdaptiveButtonStyle.filled,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Genre chips
                     Wrap(
                       spacing: 8,
@@ -310,9 +318,9 @@ class MovieDetailScreen extends StatelessWidget {
                           )
                           .toList(),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Synopsis section
                     const Text(
                       'Synopsis',
@@ -331,14 +339,14 @@ class MovieDetailScreen extends StatelessWidget {
                         fontSize: 15,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Additional info
                     _buildInfoSection('Director', movie['director'] as String),
                     const SizedBox(height: 16),
                     _buildInfoSection('Cast', movie['cast'] as String),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -363,13 +371,7 @@ class MovieDetailScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-          ),
-        ),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 15)),
       ],
     );
   }
