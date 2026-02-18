@@ -123,58 +123,29 @@ class FilmmendBrandLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _BrandDot(color: const Color(0xFFE87A4A)),
-            const SizedBox(width: 6),
-            _BrandDot(color: const Color(0xFF4ABD7A)),
-            const SizedBox(width: 6),
-            _BrandDot(color: AppColors.primary),
-          ],
+        ClipRRect(
+          borderRadius: BorderRadius.circular(imageSize * 0.28),
+          child: Image.asset(
+            'assets/logo/app_icon.png',
+            width: imageSize,
+            height: imageSize,
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(imageSize * 0.28),
-              child: Image.asset(
-                'assets/logo/app_icon.png',
-                width: imageSize,
-                height: imageSize,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Filmmend Me',
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
+        const SizedBox(width: 10),
+        Text(
+          'Filmmend Me',
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: -0.3,
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _BrandDot extends StatelessWidget {
-  final Color color;
-  const _BrandDot({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 13,
-      height: 13,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
