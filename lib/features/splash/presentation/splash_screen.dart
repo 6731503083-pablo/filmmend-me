@@ -81,10 +81,11 @@ class SplashScreen extends StatelessWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(28),
+          width: 140,
+          height: 140,
           decoration: BoxDecoration(
             color: AppColors.glassFill,
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(36),
             border: Border.all(color: AppColors.glassBorder, width: 1),
             boxShadow: [
               BoxShadow(
@@ -94,10 +95,14 @@ class SplashScreen extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.movie_outlined,
-            size: 80,
-            color: AppColors.textPrimary,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(35),
+            child: Image.asset(
+              'assets/logo/app_icon.png',
+              width: 140,
+              height: 140,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: 40),
