@@ -13,7 +13,7 @@ class AppTheme {
       // Color scheme
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
-        secondary: AppColors.primaryLight,
+        secondary: AppColors.primaryDark,
         surface: AppColors.surface,
         error: AppColors.error,
       ),
@@ -127,8 +127,8 @@ class AppTheme {
       ),
 
       // Divider
-      dividerTheme: const DividerThemeData(
-        color: AppColors.surfaceVariant,
+      dividerTheme: DividerThemeData(
+        color: AppColors.glassBorder,
         thickness: 1,
       ),
 

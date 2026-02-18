@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/router.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -24,7 +26,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _handleRegister() {
-    // Mock register - no real authentication
     isLoggedIn = true;
     context.go(RouteNames.home);
   }
@@ -32,53 +33,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF1A1D2E),
-              const Color(0xFF252A3D),
-              const Color(0xFF1A1D2E),
-            ],
-          ),
-        ),
+      body: GradientBackground(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                // Back button
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      onPressed: () {
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          context.go(RouteNames.home);
-                        }
-                      },
-                    ),
-                  ),
-                ),
-
-                // Main content - centered
+                const GlassBackButton(),
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -86,124 +49,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Welcome text
                           const Text(
                             'Create Account',
                             style: TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               height: 1.2,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Text(
+                          const Text(
                             'Join us and discover movies that match your mood',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.white.withOpacity(0.6),
+                              color: AppColors.textSecondary,
                               height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 50),
-
-                          // Name field
-                          _buildTextField(
+                          AppTextField(
                             controller: _nameController,
                             hint: 'Full Name',
                             icon: Icons.person_outline,
                           ),
                           const SizedBox(height: 16),
-
-                          // Email field
-                          _buildTextField(
+                          AppTextField(
                             controller: _emailController,
                             hint: 'Email',
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                           ),
                           const SizedBox(height: 16),
-
-                          // Password field
-                          _buildTextField(
+                          AppTextField(
                             controller: _passwordController,
                             hint: 'Password',
                             icon: Icons.lock_outline,
                             obscureText: true,
                           ),
                           const SizedBox(height: 32),
-
-                          // Register button
-                          Container(
-                            width: double.infinity,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF4A90E2), Color(0xFF357ABD)],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF4A90E2,
-                                  ).withOpacity(0.3),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _handleRegister,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                          GradientButton(
+                            text: 'Sign Up',
+                            onPressed: _handleRegister,
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-
-                // Sign in link - at bottom
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: 15,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => context.go(RouteNames.login),
-                        child: const Text(
-                          'Sign In',
-                          style: TextStyle(
-                            color: Color(0xFF4A90E2),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildSignInLink(),
               ],
             ),
           ),
@@ -212,44 +106,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: TextField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.4),
-              fontSize: 16,
-            ),
-            prefixIcon: Icon(
-              icon,
-              color: Colors.white.withOpacity(0.5),
-              size: 22,
-            ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 18,
+  Widget _buildSignInLink() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Already have an account? ',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+          ),
+          GestureDetector(
+            onTap: () => context.go(RouteNames.login),
+            child: const Text(
+              'Sign In',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
