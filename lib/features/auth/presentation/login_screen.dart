@@ -215,26 +215,29 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white, fontSize: 16),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.4),
-            fontSize: 16,
-          ),
-          prefixIcon: Icon(
-            icon,
-            color: Colors.white.withOpacity(0.5),
-            size: 22,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 18,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: TextField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.white.withOpacity(0.4),
+              fontSize: 16,
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: Colors.white.withOpacity(0.5),
+              size: 22,
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 18,
+            ),
           ),
         ),
       ),

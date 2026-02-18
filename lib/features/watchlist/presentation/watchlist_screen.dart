@@ -146,7 +146,7 @@ class WatchlistScreen extends StatelessWidget {
                     genres: movie['genres'] as List<String>,
                     onTap: () {
                       context.go(
-                        '${RouteNames.home}/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie['id']}',
+                        '/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie['id']}',
                       );
                     },
                   ),

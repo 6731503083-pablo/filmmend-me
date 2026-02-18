@@ -94,9 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        context.go(
-                          '${RouteNames.home}/${RouteNames.recommendations}',
-                        );
+                        context.go('/${RouteNames.recommendations}');
                       },
                       child: Container(
                         padding: const EdgeInsets.all(8),
@@ -373,9 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: ElevatedButton(
                           onPressed: selectedMood != null
                               ? () {
-                                  context.go(
-                                    '${RouteNames.home}/${RouteNames.recommendations}',
-                                  );
+                                  context.go('/${RouteNames.recommendations}');
                                 }
                               : null,
                           style: ElevatedButton.styleFrom(

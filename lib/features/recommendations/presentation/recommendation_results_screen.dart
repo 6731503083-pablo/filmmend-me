@@ -121,7 +121,7 @@ class RecommendationResultsScreen extends StatelessWidget {
             onTap: () {
               // Navigate to movie detail with ID
               context.go(
-                '${RouteNames.home}/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie['id']}',
+                '/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie['id']}',
               );
             },
           );
