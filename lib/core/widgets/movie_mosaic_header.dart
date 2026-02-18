@@ -179,7 +179,7 @@ class _BrandDot extends StatelessWidget {
   }
 }
 
-/// Warm accent button (coral gradient) used on Splash, Login, Register.
+/// App-branded accent button used on Splash, Login, Register.
 class AccentButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -200,12 +200,12 @@ class AccentButton extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFFE87A4A), Color(0xFFE84A6E)],
+            colors: [AppColors.primary, AppColors.primaryDark],
           ),
           borderRadius: BorderRadius.circular(40),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFE87A4A).withOpacity(0.35),
+              color: AppColors.primary.withOpacity(0.35),
               blurRadius: 18,
               offset: const Offset(0, 7),
             ),

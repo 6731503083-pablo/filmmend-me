@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Forgot Password?',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFFE87A4A),
+                                color: AppColors.primary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextSpan(
               text: 'Sign Up',
               style: TextStyle(
-                color: Color(0xFFE87A4A),
+                color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),

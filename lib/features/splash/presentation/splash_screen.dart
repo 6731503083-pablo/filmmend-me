@@ -9,64 +9,61 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
+      body: Column(
         children: [
-          const MovieMosaicHeader(heightFactor: 0.62),
-          Positioned(
-            top: size.height * 0.40,
-            left: 0,
-            right: 0,
-            bottom: 0,
+          const MovieMosaicHeader(heightFactor: 0.52),
+          Expanded(
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    const FilmmendBrandLogo(imageSize: 42, fontSize: 34),
-                    const SizedBox(height: 24),
+                    const FilmmendBrandLogo(imageSize: 40, fontSize: 32),
                     const Text(
                       '"Find your mood.\nDiscover your film.\nFall in love with cinema."',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         color: AppColors.textSecondary,
                         fontStyle: FontStyle.italic,
                         height: 1.6,
                       ),
                     ),
-                    const Spacer(),
-                    AccentButton(
-                      text: 'Get Started',
-                      height: 58,
-                      onPressed: () => context.go(RouteNames.home),
-                    ),
-                    const SizedBox(height: 18),
-                    GestureDetector(
-                      onTap: () => context.push(RouteNames.login),
-                      child: RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: AppColors.textSecondary,
-                          ),
-                          children: [
-                            TextSpan(text: 'Already have an account? '),
-                            TextSpan(
-                              text: 'Sign In',
-                              style: TextStyle(
-                                color: Color(0xFFE87A4A),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                    Column(
+                      children: [
+                        AccentButton(
+                          text: 'Get Started',
+                          height: 56,
+                          onPressed: () => context.go(RouteNames.home),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () => context.push(RouteNames.login),
+                          child: RichText(
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: AppColors.textSecondary,
+                              ),
+                              children: [
+                                TextSpan(text: 'Already have an account? '),
+                                TextSpan(
+                                  text: 'Sign In',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),

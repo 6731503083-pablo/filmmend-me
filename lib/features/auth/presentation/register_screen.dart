@@ -123,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextSpan(
               text: 'Login Page',
               style: TextStyle(
-                color: Color(0xFFE87A4A),
+                color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
