@@ -14,8 +14,9 @@ class TmdbService {
   static const String _ciToken = '__TMDB_TOKEN__';
 
   /// Returns the API read-access token.
-  static String get _token =>
-      _ciToken.startsWith('__') ? (dotenv.env['TMDB_READ_TOKEN'] ?? '') : _ciToken;
+  static String get _token => _ciToken.startsWith('__')
+      ? (dotenv.env['TMDB_READ_TOKEN'] ?? '')
+      : _ciToken;
 
   /// Default headers for all authenticated requests.
   static Map<String, String> get _headers => {
