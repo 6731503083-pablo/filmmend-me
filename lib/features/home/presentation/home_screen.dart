@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? selectedMood;
   double availableTime = 90;
+  bool _bannerDismissed = false;
 
   static const List<Map<String, dynamic>> _moods = [
     {
@@ -66,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             children: [
               _buildAppBar(),
+              _buildVerificationBanner(),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -86,6 +90,54 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVerificationBanner() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (_bannerDismissed || user == null || user.emailVerified) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Please verify your email address.',
+              style: TextStyle(color: Colors.amber, fontSize: 13),
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: () async {
+              await AuthService().resendVerificationEmail();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Verification email sent!')),
+                );
+              }
+            },
+            child: const Text('Resend', style: TextStyle(fontSize: 13)),
+          ),
+          InkWell(
+            onTap: () => setState(() => _bannerDismissed = true),
+            child: const Icon(Icons.close, color: Colors.amber, size: 18),
+          ),
+        ],
       ),
     );
   }

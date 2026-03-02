@@ -37,6 +37,7 @@ class AuthService {
 
     final user = credential.user!;
     await user.updateDisplayName(displayName.trim());
+    await user.sendEmailVerification();
 
     // Create user document in Firestore
     await _firestore.collection('users').doc(user.uid).set({
@@ -53,6 +54,11 @@ class AuthService {
       photoUrl: null,
       createdAt: DateTime.now(),
     );
+  }
+
+  /// Resend email verification
+  Future<void> resendVerificationEmail() async {
+    await _auth.currentUser?.sendEmailVerification();
   }
 
   /// Sign out
