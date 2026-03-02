@@ -39,7 +39,7 @@ jobs:
           fi
 
       - name: Build Flutter web
-        run: flutter build web --release
+        run: flutter build web --release --pwa-strategy=none
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
