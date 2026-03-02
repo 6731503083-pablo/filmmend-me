@@ -27,10 +27,16 @@ jobs:
         run: echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 --decode > lib/firebase_options.dart
 
       - name: Inject TMDB token into source
-        run: sed -i 's|CI_TMDB_TOKEN_PLACEHOLDER|'"${{ secrets.TMDB_READ_TOKEN }}"'|g' lib/services/tmdb_service.dart
+        run: sed -i 's|__TMDB_TOKEN__|'"${{ secrets.TMDB_READ_TOKEN }}"'|' lib/services/tmdb_service.dart
 
       - name: Verify token injection
-        run: grep -c 'CI_TMDB_TOKEN_PLACEHOLDER' lib/services/tmdb_service.dart && echo 'ERROR - placeholder not replaced!' && exit 1 || echo 'Token injected successfully'
+        run: |
+          if grep -q '__TMDB_TOKEN__' lib/services/tmdb_service.dart; then
+            echo 'ERROR - placeholder was not replaced!'
+            exit 1
+          else
+            echo 'Token injected successfully'
+          fi
 
       - name: Build Flutter web
         run: flutter build web --release
