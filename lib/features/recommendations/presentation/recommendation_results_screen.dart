@@ -8,11 +8,7 @@ import '../../../models/movie_model.dart';
 import '../../../services/tmdb_service.dart';
 
 class RecommendationResultsScreen extends StatefulWidget {
-  const RecommendationResultsScreen({
-    super.key,
-    this.mood,
-    this.maxMinutes,
-  });
+  const RecommendationResultsScreen({super.key, this.mood, this.maxMinutes});
 
   final String? mood;
   final int? maxMinutes;
@@ -37,7 +33,7 @@ class _RecommendationResultsScreenState
     if (widget.mood != null) {
       _moviesFuture = _service.discoverMovies(
         mood: widget.mood!,
-        maxMinutes: widget.maxMinutes,
+        minMinutes: widget.maxMinutes,
       );
     } else {
       _moviesFuture = _service.getPopularMovies();
@@ -51,9 +47,9 @@ class _RecommendationResultsScreenState
 
   String get _subtitle {
     if (widget.mood != null && widget.maxMinutes != null) {
-      return 'Mood: ${widget.mood}  ·  Up to ${widget.maxMinutes} min';
+      return 'Mood: ${widget.mood}  ·  At least ${widget.maxMinutes} min';
     }
-    if (widget.mood != null) return 'Filtered by mood: ${widget.mood}';
+    if (widget.mood != null) return 'Mood: ${widget.mood}';
     return 'Top movies right now';
   }
 
@@ -74,7 +70,10 @@ class _RecommendationResultsScreenState
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.textPrimary,
+            ),
             tooltip: 'Refresh',
             onPressed: () => setState(_load),
           ),
@@ -157,7 +156,9 @@ class _RecommendationResultsScreenState
             Text(
               error,
               style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 13),
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
               textAlign: TextAlign.center,
               maxLines: 3,
             ),
@@ -195,4 +196,3 @@ class _RecommendationResultsScreenState
     );
   }
 }
-

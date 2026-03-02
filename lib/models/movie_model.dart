@@ -64,12 +64,15 @@ class MovieModel {
           .toList();
     } else {
       // Discover/list response
-      genreIds = (json['genre_ids'] as List<dynamic>?)
+      genreIds =
+          (json['genre_ids'] as List<dynamic>?)
               ?.map((e) => e as int)
               .toList() ??
           [];
-      genreNames =
-          genreIds.map((id) => genreMap[id] ?? '').where((n) => n.isNotEmpty).toList();
+      genreNames = genreIds
+          .map((id) => genreMap[id] ?? '')
+          .where((n) => n.isNotEmpty)
+          .toList();
     }
 
     return MovieModel(

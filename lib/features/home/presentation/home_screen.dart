@@ -16,14 +16,46 @@ class _HomeScreenState extends State<HomeScreen> {
   double availableTime = 90;
 
   static const List<Map<String, dynamic>> _moods = [
-    {'label': 'Chill', 'icon': Icons.air, 'gradient': [Color(0xFF667eea), Color(0xFF764ba2)]},
-    {'label': 'Happy', 'icon': Icons.sentiment_satisfied_alt, 'gradient': [Color(0xFFf093fb), Color(0xFFF5576C)]},
-    {'label': 'Sad', 'icon': Icons.sentiment_dissatisfied, 'gradient': [Color(0xFF4facfe), Color(0xFF00f2fe)]},
-    {'label': 'Excited', 'icon': Icons.celebration, 'gradient': [Color(0xFFfa709a), Color(0xFFfee140)]},
-    {'label': 'Romantic', 'icon': Icons.favorite, 'gradient': [Color(0xFFff9a9e), Color(0xFFfad0c4)]},
-    {'label': 'Tired', 'icon': Icons.bedtime, 'gradient': [Color(0xFFa18cd1), Color(0xFFfbc2eb)]},
-    {'label': 'Thoughtful', 'icon': Icons.psychology, 'gradient': [Color(0xFF4A90E2), Color(0xFF357ABD)]},
-    {'label': 'Curious', 'icon': Icons.visibility, 'gradient': [Color(0xFF2193b0), Color(0xFF6dd5ed)]},
+    {
+      'label': 'Chill',
+      'icon': Icons.air,
+      'gradient': [Color(0xFF667eea), Color(0xFF764ba2)],
+    },
+    {
+      'label': 'Happy',
+      'icon': Icons.sentiment_satisfied_alt,
+      'gradient': [Color(0xFFf093fb), Color(0xFFF5576C)],
+    },
+    {
+      'label': 'Sad',
+      'icon': Icons.sentiment_dissatisfied,
+      'gradient': [Color(0xFF4facfe), Color(0xFF00f2fe)],
+    },
+    {
+      'label': 'Excited',
+      'icon': Icons.celebration,
+      'gradient': [Color(0xFFfa709a), Color(0xFFfee140)],
+    },
+    {
+      'label': 'Romantic',
+      'icon': Icons.favorite,
+      'gradient': [Color(0xFFff9a9e), Color(0xFFfad0c4)],
+    },
+    {
+      'label': 'Tired',
+      'icon': Icons.bedtime,
+      'gradient': [Color(0xFFa18cd1), Color(0xFFfbc2eb)],
+    },
+    {
+      'label': 'Thoughtful',
+      'icon': Icons.psychology,
+      'gradient': [Color(0xFF4A90E2), Color(0xFF357ABD)],
+    },
+    {
+      'label': 'Curious',
+      'icon': Icons.visibility,
+      'gradient': [Color(0xFF2193b0), Color(0xFF6dd5ed)],
+    },
   ];
 
   @override
@@ -209,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Available Time',
+                'Minimum Duration',
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 16,
@@ -217,9 +249,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                  gradient: const LinearGradient(
+                    colors: AppColors.primaryGradient,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -254,9 +291,18 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
-              Text('0m', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
-              Text('90m', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
-              Text('180m', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+              Text(
+                '0m',
+                style: TextStyle(color: AppColors.textHint, fontSize: 12),
+              ),
+              Text(
+                '90m',
+                style: TextStyle(color: AppColors.textHint, fontSize: 12),
+              ),
+              Text(
+                '180m',
+                style: TextStyle(color: AppColors.textHint, fontSize: 12),
+              ),
             ],
           ),
         ],
@@ -270,10 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: selectedMood != null
           ? () => context.go(
               '/${RouteNames.recommendations}',
-              extra: {
-                'mood': selectedMood!,
-                'time': availableTime.toInt(),
-              },
+              extra: {'mood': selectedMood!, 'time': availableTime.toInt()},
             )
           : null,
       height: 60,

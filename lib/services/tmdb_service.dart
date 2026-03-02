@@ -23,34 +23,49 @@ class TmdbService {
   //   99 Documentary | 18 Drama | 10751 Family | 14 Fantasy | 36 History
   //   27 Horror | 10402 Music | 9648 Mystery | 10749 Romance | 878 Sci-Fi
   //   10770 TV Movie | 53 Thriller | 10752 War | 37 Western
+  //
+  // These are joined with '|' (OR) so a movie only needs to match ONE genre.
   static const Map<String, List<int>> moodGenres = {
-    'Chill': [10749, 18, 35],
-    'Happy': [35, 10751, 16],
-    'Sad': [18, 10402],
-    'Excited': [28, 12, 878],
-    'Romantic': [10749, 18],
-    'Tired': [16, 10751, 35],
-    'Thoughtful': [18, 9648, 36],
-    'Curious': [99, 9648, 878],
+    // Relaxing — light romance, soft comedy, easy drama, animation
+    'Chill':      [10749, 35, 16, 10751],
+    // Feel-good — comedy, animation, family, music
+    'Happy':      [35, 16, 10751, 10402],
+    // Emotional — drama, music, romance (tearjerkers)
+    'Sad':        [18, 10402, 10749],
+    // High-energy — action, adventure, sci-fi, thriller
+    'Excited':    [28, 12, 878, 53],
+    // Love stories — romance first, drama, comedy
+    'Romantic':   [10749, 18, 35],
+    // Low-effort watching — animation, family, comedy
+    'Tired':      [16, 10751, 35],
+    // Cerebral — drama, history, mystery, documentary
+    'Thoughtful': [18, 36, 9648, 99],
+    // Exploratory — documentary, mystery, sci-fi, history, fantasy
+    'Curious':    [99, 9648, 878, 36, 14],
   };
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
-  /// Discover movies filtered by mood (→ genres) and a max runtime in minutes.
+  /// Discover movies filtered by mood (→ genres) and a minimum runtime in minutes.
+  /// Genres are joined with '|' (OR logic) so results are broad.
   /// Returns up to 20 movies (one page from TMDB).
   Future<List<MovieModel>> discoverMovies({
     required String mood,
-    int? maxMinutes,
+    int? minMinutes,
     int page = 1,
   }) async {
-    final genres = (moodGenres[mood] ?? []).join(',');
+    // Use '|' = OR so a movie only needs to match one of the mood genres.
+    final genres = (moodGenres[mood] ?? []).join('|');
 
     final queryParams = <String, String>{
-      'sort_by': 'popularity.desc',
-      'vote_count.gte': '100',
+      'sort_by': 'vote_average.desc',
+      'vote_count.gte': '200',
+      'vote_average.gte': '6.0',
       'page': '$page',
       if (genres.isNotEmpty) 'with_genres': genres,
-      if (maxMinutes != null) 'with_runtime.lte': '$maxMinutes',
+      // Minimum runtime: movies must be AT LEAST this long
+      if (minMinutes != null && minMinutes > 0)
+        'with_runtime.gte': '$minMinutes',
     };
 
     final uri = Uri.parse(

@@ -46,7 +46,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () => context.pop(),
               ),
             ),
@@ -56,7 +59,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.white30),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.white30,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Couldn\'t load movie',
@@ -70,7 +77,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     Text(
                       snapshot.error.toString(),
                       style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13),
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                       textAlign: TextAlign.center,
                       maxLines: 3,
                     ),
@@ -163,7 +172,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   Widget _buildPosterImage(MovieModel movie) {
-    final url = movie.backdropUrl.isNotEmpty ? movie.backdropUrl : movie.posterUrl;
+    final url = movie.backdropUrl.isNotEmpty
+        ? movie.backdropUrl
+        : movie.posterUrl;
     if (url.isEmpty) {
       return Container(
         color: AppColors.surface,
