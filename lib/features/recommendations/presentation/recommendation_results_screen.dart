@@ -332,9 +332,7 @@ class _RecommendationResultsScreenState
                         ),
                       ),
                       Text(
-                        sheetMinMinutes > 0
-                            ? '$sheetMinMinutes min'
-                            : 'Any',
+                        sheetMinMinutes > 0 ? '$sheetMinMinutes min' : 'Any',
                         style: const TextStyle(
                           color: AppColors.primary,
                           fontSize: 14,
@@ -350,9 +348,7 @@ class _RecommendationResultsScreenState
                     divisions: 12,
                     activeColor: AppColors.primary,
                     inactiveColor: Colors.white12,
-                    label: sheetMinMinutes > 0
-                        ? '$sheetMinMinutes min'
-                        : 'Any',
+                    label: sheetMinMinutes > 0 ? '$sheetMinMinutes min' : 'Any',
                     onChanged: (v) =>
                         setSheetState(() => sheetMinMinutes = v.toInt()),
                   ),
@@ -375,8 +371,8 @@ class _RecommendationResultsScreenState
                       final isSelected = sheetLanguage == lang['code'];
                       return GestureDetector(
                         onTap: () => setSheetState(
-                          () => sheetLanguage =
-                              isSelected ? null : lang['code'],
+                          () =>
+                              sheetLanguage = isSelected ? null : lang['code'],
                         ),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
@@ -422,8 +418,9 @@ class _RecommendationResultsScreenState
                         Navigator.pop(ctx);
                         setState(() {
                           _activeMood = sheetMood;
-                          _activeMinMinutes =
-                              sheetMinMinutes > 0 ? sheetMinMinutes : null;
+                          _activeMinMinutes = sheetMinMinutes > 0
+                              ? sheetMinMinutes
+                              : null;
                           _activeLanguage = sheetLanguage;
                           _load();
                         });

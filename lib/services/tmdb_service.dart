@@ -71,8 +71,9 @@ class TmdbService {
       if (minMinutes != null && minMinutes > 0)
         'with_runtime.gte': '$minMinutes',
     };
-    final enUri = Uri.parse('$_baseUrl/discover/movie')
-        .replace(queryParameters: enParams);
+    final enUri = Uri.parse(
+      '$_baseUrl/discover/movie',
+    ).replace(queryParameters: enParams);
     final enResponse = await http.get(enUri, headers: _headers);
     _checkStatus(enResponse);
     final enData = jsonDecode(enResponse.body) as Map<String, dynamic>;
@@ -98,8 +99,9 @@ class TmdbService {
       if (minMinutes != null && minMinutes > 0)
         'with_runtime.gte': '$minMinutes',
     };
-    final intlUri = Uri.parse('$_baseUrl/discover/movie')
-        .replace(queryParameters: intlParams);
+    final intlUri = Uri.parse(
+      '$_baseUrl/discover/movie',
+    ).replace(queryParameters: intlParams);
     final intlResponse = await http.get(intlUri, headers: _headers);
     _checkStatus(intlResponse);
     final intlData = jsonDecode(intlResponse.body) as Map<String, dynamic>;
@@ -109,10 +111,7 @@ class TmdbService {
 
     // -- 3. Merge: English first, then sprinkle in international titles --
     // Keep up to ~15 English + up to ~5 international, then shuffle.
-    final merged = <MovieModel>[
-      ...enResults.take(15),
-      ...intlResults.take(5),
-    ];
+    final merged = <MovieModel>[...enResults.take(15), ...intlResults.take(5)];
     merged.shuffle(rng);
     return merged;
   }
