@@ -23,6 +23,9 @@ jobs:
       - name: Create .env file
         run: echo "TMDB_READ_TOKEN=${{ secrets.TMDB_READ_TOKEN }}" > .env
 
+      - name: Generate firebase_options.dart
+        run: echo "${{ secrets.FIREBASE_OPTIONS_DART }}" > lib/firebase_options.dart
+
       - name: Build Flutter web
         run: flutter build web --release
 
