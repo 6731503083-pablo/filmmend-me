@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -12,8 +13,8 @@ import 'app_shell.dart';
 import 'route_names.dart';
 import 'login_required_screen.dart';
 
-// Mock authentication state
-ValueNotifier<bool> isLoggedIn = ValueNotifier(false);
+/// Whether the user is currently authenticated via Firebase
+bool get isLoggedIn => FirebaseAuth.instance.currentUser != null;
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 

@@ -1,10 +1,12 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/router/router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../models/user_model.dart';
+import '../../../services/auth_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -22,29 +24,44 @@ class ProfileScreen extends StatelessWidget {
           style: TextStyle(color: AppColors.textPrimary),
         ),
       ),
-      body: ValueListenableBuilder<bool>(
-        valueListenable: isLoggedIn,
-        builder: (context, loggedIn, _) => Center(
-          child: loggedIn
-              ? _buildLoggedInView(context)
-              : const LoginRequiredView(
-                  icon: Icons.person_outline,
-                  subtitle: 'Please log in to view your profile',
-                ),
-        ),
+      body: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+          if (user == null) {
+            return const Center(
+              child: LoginRequiredView(
+                icon: Icons.person_outline,
+                subtitle: 'Please log in to view your profile',
+              ),
+            );
+          }
+          return FutureBuilder<UserModel?>(
+            future: AuthService().getCurrentUserModel(),
+            builder: (context, modelSnap) {
+              if (modelSnap.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
+              }
+              final model = modelSnap.data;
+              return Center(child: _buildLoggedInView(context, user, model));
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _buildLoggedInView(BuildContext context) {
+  Widget _buildLoggedInView(BuildContext context, User user, UserModel? model) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildAvatar(),
         const SizedBox(height: 16),
-        const Text(
-          'Alex Johnson',
-          style: TextStyle(
+        Text(
+          model?.displayName ?? user.displayName ?? 'Film Fan',
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -53,9 +70,14 @@ class ProfileScreen extends StatelessWidget {
         const SizedBox(height: 4),
         _buildBadge(),
         const SizedBox(height: 8),
-        const Text(
-          'Member since 2021',
-          style: TextStyle(color: Colors.white54),
+        Text(
+          model?.memberSince ?? '',
+          style: const TextStyle(color: Colors.white54),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          user.email ?? '',
+          style: const TextStyle(color: Colors.white38, fontSize: 13),
         ),
         const SizedBox(height: 40),
         _buildLogoutButton(context),
@@ -160,10 +182,12 @@ class ProfileScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: AdaptiveButton(
-                onPressed: () {
-                  isLoggedIn.value = false;
-                  context.pop();
-                  context.go(RouteNames.home);
+                onPressed: () async {
+                  await AuthService().signOut();
+                  if (context.mounted) {
+                    context.pop();
+                    context.go(RouteNames.home);
+                  }
                 },
                 label: 'Log Out',
                 style: AdaptiveButtonStyle.filled,

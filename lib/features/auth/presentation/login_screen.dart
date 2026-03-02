@@ -1,9 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/router/router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,20 +14,44 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleSignIn() {
-    isLoggedIn.value = true;
-    context.go(RouteNames.home);
+  Future<void> _handleSignIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'Please fill in all fields.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _authService.signIn(email: email, password: password);
+      if (mounted) context.go(RouteNames.home);
+    } on FirebaseAuthException catch (e) {
+      setState(() => _errorMessage = AuthService.friendlyError(e));
+    } catch (e) {
+      setState(() => _errorMessage = 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -70,10 +95,42 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
+                        if (_errorMessage != null)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         AuthField(
-                          controller: _usernameController,
-                          hint: 'Username',
-                          icon: Icons.person_outline_rounded,
+                          controller: _emailController,
+                          hint: 'Email',
+                          icon: Icons.mail_outline_rounded,
+                          keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 14),
                         AuthField(
@@ -89,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: GestureDetector(
-                            onTap: () {},
+                            onTap: _handleForgotPassword,
                             child: const Text(
                               'Forgot Password?',
                               style: TextStyle(
@@ -101,7 +158,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 28),
-                        AccentButton(text: 'Login', onPressed: _handleSignIn),
+                        _isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primary,
+                                ),
+                              )
+                            : AccentButton(
+                                text: 'Login',
+                                onPressed: _handleSignIn,
+                              ),
                         const SizedBox(height: 22),
                         _buildSignUpLink(),
                         const SizedBox(height: 48),
@@ -115,6 +181,38 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     );
+  }
+
+  void _handleForgotPassword() {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(
+        () =>
+            _errorMessage = 'Enter your email first, then tap Forgot Password.',
+      );
+      return;
+    }
+    _authService
+        .sendPasswordReset(email)
+        .then((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Password reset email sent to $email'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        })
+        .catchError((e) {
+          if (mounted) {
+            setState(
+              () => _errorMessage = e is FirebaseAuthException
+                  ? AuthService.friendlyError(e)
+                  : 'Could not send reset email.',
+            );
+          }
+        });
   }
 
   Widget _buildSignUpLink() {

@@ -1,12 +1,1 @@
-{
-  "hosting": {
-    "public": "build/web",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
-}
+{"hosting":{"public":"build/web","ignore":["firebase.json","**/.*","**/node_modules/**"],"rewrites":[{"source":"**","destination":"/index.html"}]},"flutter":{"platforms":{"android":{"default":{"projectId":"filmmend-me","appId":"1:316474289696:android:f2c63fc5fd57f23217d645","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"filmmend-me","appId":"1:316474289696:ios:0540e86cc2fc42cf17d645","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"filmmend-me","appId":"1:316474289696:ios:0540e86cc2fc42cf17d645","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"filmmend-me","configurations":{"android":"1:316474289696:android:f2c63fc5fd57f23217d645","ios":"1:316474289696:ios:0540e86cc2fc42cf17d645","macos":"1:316474289696:ios:0540e86cc2fc42cf17d645","web":"1:316474289696:web:9fba6d048779f97517d645","windows":"1:316474289696:web:fb362ce3a153dabf17d645"}}}}}}

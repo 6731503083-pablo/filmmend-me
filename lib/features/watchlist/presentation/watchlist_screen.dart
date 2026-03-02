@@ -1,10 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/router/router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/mock_data.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../services/watchlist_service.dart';
 
 class WatchlistScreen extends StatelessWidget {
   const WatchlistScreen({super.key});
@@ -22,36 +22,95 @@ class WatchlistScreen extends StatelessWidget {
           style: TextStyle(color: AppColors.textPrimary),
         ),
       ),
-      body: ValueListenableBuilder<bool>(
-        valueListenable: isLoggedIn,
-        builder: (context, loggedIn, _) => !loggedIn
-          ? const LoginRequiredView(
+      body: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, authSnap) {
+          if (authSnap.data == null) {
+            return const LoginRequiredView(
               icon: Icons.bookmark_border,
               subtitle: 'Sign in to save and view your favorite movies',
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: MockData.watchlistMovies.length,
-              itemBuilder: (context, index) {
-                final movie = MockData.watchlistMovies[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: MovieCard(
-                    title: movie['title'] as String,
-                    posterUrl: movie['posterUrl'] as String,
-                    rating: movie['rating'] as double,
-                    runtime: movie['runtime'] as String,
-                    genres: (movie['genres'] as List).cast<String>(),
-                    onTap: () {
-                      context.go(
-                        '/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie['id']}',
-                      );
-                    },
+            );
+          }
+          final ws = WatchlistService();
+          return StreamBuilder<List<Map<String, dynamic>>>(
+            stream: ws.watchlistStream(),
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
+              }
+              final movies = snap.data ?? [];
+              if (movies.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.bookmark_border,
+                        color: Colors.white24,
+                        size: 64,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Your watchlist is empty',
+                        style: TextStyle(color: Colors.white54, fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Add movies from the detail page',
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
+                      ),
+                    ],
                   ),
                 );
-              },
-            ),
-          ),
+              }
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: movies.length,
+                itemBuilder: (context, index) {
+                  final movie = movies[index];
+                  return Dismissible(
+                    key: Key(movie['movieId'].toString()),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.delete, color: Colors.red),
+                    ),
+                    onDismissed: (_) {
+                      ws.removeMovie(movie['movieId'].toString());
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: MovieCard(
+                        title: movie['title'] ?? 'Unknown',
+                        posterUrl: movie['posterPath'] != null
+                            ? 'https://image.tmdb.org/t/p/w500${movie['posterPath']}'
+                            : '',
+                        rating: (movie['rating'] as num?)?.toDouble() ?? 0.0,
+                        runtime: movie['runtime'] ?? '',
+                        genres:
+                            (movie['genres'] as List?)?.cast<String>() ?? [],
+                        onTap: () {
+                          context.go(
+                            '/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie['movieId']}',
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "316474289696",
+    "project_id": "filmmend-me",
+    "storage_bucket": "filmmend-me.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316474289696:android:f2c63fc5fd57f23217d645",
+        "android_client_info": {
+          "package_name": "com.example.filmmend_me"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBslJQWAwcLMB7xFoZ2hY1ZljhGW2wAV90"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

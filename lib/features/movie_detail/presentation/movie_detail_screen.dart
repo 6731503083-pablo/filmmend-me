@@ -1,13 +1,14 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/router/router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/movie_model.dart';
 import '../../../services/tmdb_service.dart';
+import '../../../services/watchlist_service.dart';
 
 class MovieDetailScreen extends StatefulWidget {
   const MovieDetailScreen({super.key, required this.movieId});
@@ -20,6 +21,7 @@ class MovieDetailScreen extends StatefulWidget {
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
   late Future<MovieModel> _movieFuture;
+  MovieModel? _movie;
   final _service = TmdbService();
 
   @override
@@ -96,6 +98,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   Widget _buildDetail(BuildContext context, MovieModel movie) {
+    _movie = movie;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -342,19 +345,50 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   Widget _buildWatchlistButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: AdaptiveButton(
-        onPressed: () {
-          if (isLoggedIn.value) {
-            _showSuccessDialog(context);
-          } else {
-            context.push(RouteNames.login);
-          }
-        },
-        label: 'Add to Watchlist',
-        style: AdaptiveButtonStyle.filled,
-      ),
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return SizedBox(
+        width: double.infinity,
+        child: AdaptiveButton(
+          onPressed: () => context.push(RouteNames.login),
+          label: 'Sign in to add to Watchlist',
+          style: AdaptiveButtonStyle.filled,
+        ),
+      );
+    }
+
+    final ws = WatchlistService();
+    final movieId = widget.movieId;
+
+    return StreamBuilder<bool>(
+      stream: ws.watchlistStatus(movieId),
+      builder: (context, snap) {
+        final inWatchlist = snap.data ?? false;
+        return SizedBox(
+          width: double.infinity,
+          child: AdaptiveButton(
+            onPressed: () async {
+              if (inWatchlist) {
+                await ws.removeMovie(movieId);
+              } else {
+                if (_movie != null) {
+                  await ws.addMovie(
+                    movieId: movieId,
+                    title: _movie!.title,
+                    posterPath: _movie!.posterPath,
+                    rating: _movie!.voteAverage,
+                    releaseDate: _movie!.releaseDate,
+                    genres: _movie!.genres,
+                    runtime: _movie!.runtimeFormatted,
+                  );
+                }
+              }
+            },
+            label: inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist',
+            style: AdaptiveButtonStyle.filled,
+          ),
+        );
+      },
     );
   }
 
@@ -712,7 +746,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         itemBuilder: (context, index) {
           final m = similar[index];
           return GestureDetector(
-            onTap: () => context.push('/${RouteNames.recommendations}/${RouteNames.movieDetail}/${m.id}'),
+            onTap: () => context.push(
+              '/${RouteNames.recommendations}/${RouteNames.movieDetail}/${m.id}',
+            ),
             child: Container(
               width: 130,
               margin: EdgeInsets.only(
@@ -787,30 +823,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Icon(Icons.movie, size: 40, color: Colors.white30),
-    );
-  }
-
-  void _showSuccessDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Added to Watchlist',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: const Text(
-          'Movie has been added to your watchlist!',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          AdaptiveButton(
-            onPressed: () => context.pop(),
-            label: 'OK',
-            style: AdaptiveButtonStyle.filled,
-          ),
-        ],
-      ),
     );
   }
 }
