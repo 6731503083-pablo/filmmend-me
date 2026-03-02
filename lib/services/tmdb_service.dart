@@ -27,21 +27,21 @@ class TmdbService {
   // These are joined with '|' (OR) so a movie only needs to match ONE genre.
   static const Map<String, List<int>> moodGenres = {
     // Relaxing — light romance, soft comedy, easy drama, animation
-    'Chill':      [10749, 35, 16, 10751],
+    'Chill': [10749, 35, 16, 10751],
     // Feel-good — comedy, animation, family, music
-    'Happy':      [35, 16, 10751, 10402],
+    'Happy': [35, 16, 10751, 10402],
     // Emotional — drama, music, romance (tearjerkers)
-    'Sad':        [18, 10402, 10749],
+    'Sad': [18, 10402, 10749],
     // High-energy — action, adventure, sci-fi, thriller
-    'Excited':    [28, 12, 878, 53],
+    'Excited': [28, 12, 878, 53],
     // Love stories — romance first, drama, comedy
-    'Romantic':   [10749, 18, 35],
+    'Romantic': [10749, 18, 35],
     // Low-effort watching — animation, family, comedy
-    'Tired':      [16, 10751, 35],
+    'Tired': [16, 10751, 35],
     // Cerebral — drama, history, mystery, documentary
     'Thoughtful': [18, 36, 9648, 99],
     // Exploratory — documentary, mystery, sci-fi, history, fantasy
-    'Curious':    [99, 9648, 878, 36, 14],
+    'Curious': [99, 9648, 878, 36, 14],
   };
 
   // ── Public API ───────────────────────────────────────────────────────────────
@@ -82,9 +82,12 @@ class TmdbService {
         .toList();
   }
 
-  /// Fetch full movie details including runtime.
+  /// Fetch full movie details including runtime, credits, and similar movies.
+  /// Uses `append_to_response` to get everything in a single API call.
   Future<MovieModel> getMovieDetails(int movieId) async {
-    final uri = Uri.parse('$_baseUrl/movie/$movieId');
+    final uri = Uri.parse('$_baseUrl/movie/$movieId').replace(
+      queryParameters: {'append_to_response': 'credits,similar,videos'},
+    );
     final response = await http.get(uri, headers: _headers);
     _checkStatus(response);
 
