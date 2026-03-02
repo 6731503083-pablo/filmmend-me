@@ -712,7 +712,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         itemBuilder: (context, index) {
           final m = similar[index];
           return GestureDetector(
-            onTap: () => context.push('/movie/${m.id}'),
+            onTap: () => context.push('/${RouteNames.recommendations}/${RouteNames.movieDetail}/${m.id}'),
             child: Container(
               width: 130,
               margin: EdgeInsets.only(
