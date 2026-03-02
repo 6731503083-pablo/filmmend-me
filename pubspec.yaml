@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   go_router: ^14.6.2
   adaptive_platform_ui: ^0.1.6
+  http: ^1.2.2
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -34,3 +36,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo/
+    - .env

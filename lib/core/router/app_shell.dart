@@ -57,9 +57,7 @@ class _WebNavBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          top: BorderSide(color: AppColors.glassBorder, width: 1),
-        ),
+        border: Border(top: BorderSide(color: AppColors.glassBorder, width: 1)),
       ),
       child: SafeArea(
         top: false,
@@ -132,8 +130,7 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 fontSize: 11,
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],
@@ -142,4 +139,3 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
-

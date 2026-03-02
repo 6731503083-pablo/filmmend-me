@@ -1,20 +1,91 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/router/router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/mock_data.dart';
+import '../../../models/movie_model.dart';
+import '../../../services/tmdb_service.dart';
 
-class MovieDetailScreen extends StatelessWidget {
+class MovieDetailScreen extends StatefulWidget {
   const MovieDetailScreen({super.key, required this.movieId});
 
   final String movieId;
 
   @override
-  Widget build(BuildContext context) {
-    final movie = MockData.getMovieById(movieId);
+  State<MovieDetailScreen> createState() => _MovieDetailScreenState();
+}
 
+class _MovieDetailScreenState extends State<MovieDetailScreen> {
+  late Future<MovieModel> _movieFuture;
+  final _service = TmdbService();
+
+  @override
+  void initState() {
+    super.initState();
+    _movieFuture = _service.getMovieDetails(int.parse(widget.movieId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<MovieModel>(
+      future: _movieFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                onPressed: () => context.pop(),
+              ),
+            ),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.white30),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Couldn\'t load movie',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      snapshot.error.toString(),
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        return _buildDetail(context, snapshot.data!);
+      },
+    );
+  }
+
+  Widget _buildDetail(BuildContext context, MovieModel movie) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -33,14 +104,14 @@ class MovieDetailScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     _buildWatchlistButton(context),
                     const SizedBox(height: 20),
-                    _buildGenreChips(movie),
-                    const SizedBox(height: 24),
-                    _buildSynopsis(movie),
-                    const SizedBox(height: 24),
-                    _buildInfoSection('Director', movie['director'] as String),
-                    const SizedBox(height: 16),
-                    _buildInfoSection('Cast', movie['cast'] as String),
-                    const SizedBox(height: 40),
+                    if (movie.genres.isNotEmpty) ...[
+                      _buildGenreChips(movie),
+                      const SizedBox(height: 24),
+                    ],
+                    if (movie.overview.isNotEmpty) ...[
+                      _buildSynopsis(movie),
+                      const SizedBox(height: 40),
+                    ],
                   ],
                 ),
               ),
@@ -51,10 +122,7 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  SliverAppBar _buildSliverAppBar(
-    BuildContext context,
-    Map<String, dynamic> movie,
-  ) {
+  SliverAppBar _buildSliverAppBar(BuildContext context, MovieModel movie) {
     return SliverAppBar(
       expandedHeight: 450,
       pinned: true,
@@ -94,8 +162,8 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPosterImage(Map<String, dynamic> movie) {
-    final url = movie['posterUrl'].toString();
+  Widget _buildPosterImage(MovieModel movie) {
+    final url = movie.backdropUrl.isNotEmpty ? movie.backdropUrl : movie.posterUrl;
     if (url.isEmpty) {
       return Container(
         color: AppColors.surface,
@@ -112,9 +180,9 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(Map<String, dynamic> movie) {
+  Widget _buildTitle(MovieModel movie) {
     return Text(
-      movie['title'] as String,
+      movie.title,
       style: const TextStyle(
         color: AppColors.textPrimary,
         fontSize: 28,
@@ -123,8 +191,11 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadataRow(Map<String, dynamic> movie) {
-    return Row(
+  Widget _buildMetadataRow(MovieModel movie) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -138,7 +209,7 @@ class MovieDetailScreen extends StatelessWidget {
               const Icon(Icons.star, size: 16, color: Colors.black),
               const SizedBox(width: 4),
               Text(
-                (movie['rating'] as double).toStringAsFixed(1),
+                movie.ratingFormatted,
                 style: const TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
@@ -148,30 +219,23 @@ class MovieDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          movie['year'] as String,
-          style: const TextStyle(color: Colors.white70, fontSize: 16),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.white54),
-            borderRadius: BorderRadius.circular(4),
+        if (movie.releaseYear > 0)
+          Text(
+            '${movie.releaseYear}',
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
-          child: Text(
-            movie['rating_label'] as String,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+        if (movie.runtimeFormatted.isNotEmpty)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.access_time, size: 16, color: Colors.white54),
+              const SizedBox(width: 4),
+              Text(
+                movie.runtimeFormatted,
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 12),
-        const Icon(Icons.access_time, size: 16, color: Colors.white54),
-        const SizedBox(width: 4),
-        Text(
-          movie['runtime'] as String,
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
-        ),
       ],
     );
   }
@@ -193,11 +257,11 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGenreChips(Map<String, dynamic> movie) {
+  Widget _buildGenreChips(MovieModel movie) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: (movie['genres'] as List).cast<String>().map((genre) {
+      children: movie.genres.map((genre) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
@@ -218,7 +282,7 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSynopsis(Map<String, dynamic> movie) {
+  Widget _buildSynopsis(MovieModel movie) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -232,33 +296,12 @@ class MovieDetailScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          movie['synopsis'] as String,
+          movie.overview,
           style: const TextStyle(
             color: Colors.white70,
             height: 1.6,
             fontSize: 15,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoSection(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
         ),
       ],
     );

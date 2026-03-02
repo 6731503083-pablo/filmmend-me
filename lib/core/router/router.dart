@@ -61,8 +61,13 @@ final GoRouter appRouter = GoRouter(
                 GoRoute(
                   path: RouteNames.recommendations,
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) =>
-                      const RecommendationResultsScreen(),
+                  builder: (context, state) {
+                    final extra = state.extra as Map<String, dynamic>?;
+                    return RecommendationResultsScreen(
+                      mood: extra?['mood'] as String?,
+                      maxMinutes: extra?['time'] as int?,
+                    );
+                  },
                   routes: [
                     // Nested route: Movie Detail
                     GoRoute(

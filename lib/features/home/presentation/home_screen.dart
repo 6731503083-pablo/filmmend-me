@@ -74,7 +74,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () => context.go('/${RouteNames.recommendations}'),
+            onTap: () => context.go(
+              '/${RouteNames.recommendations}',
+              extra: {'mood': null, 'time': null},
+            ),
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -265,7 +268,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return GradientButton(
       text: 'Recommend Movie',
       onPressed: selectedMood != null
-          ? () => context.go('/${RouteNames.recommendations}')
+          ? () => context.go(
+              '/${RouteNames.recommendations}',
+              extra: {
+                'mood': selectedMood!,
+                'time': availableTime.toInt(),
+              },
+            )
           : null,
       height: 60,
       borderRadius: 20,
