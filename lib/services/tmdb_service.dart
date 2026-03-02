@@ -9,15 +9,14 @@ import '../models/movie_model.dart';
 class TmdbService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
 
-  /// Compile-time token from --dart-define (used in CI builds).
-  static const String _defineToken =
-      String.fromEnvironment('TMDB_READ_TOKEN');
+  /// CI injects the real token by replacing this placeholder via sed.
+  /// For local dev, dotenv is used as fallback.
+  static const String _ciToken = 'CI_TMDB_TOKEN_PLACEHOLDER';
 
   /// Returns the API read-access token.
-  /// Prefers the compile-time --dart-define value; falls back to dotenv (.env)
-  /// for local development.
-  static String get _token =>
-      _defineToken.isNotEmpty ? _defineToken : (dotenv.env['TMDB_READ_TOKEN'] ?? '');
+  static String get _token => _ciToken != 'CI_TMDB_TOKEN_PLACEHOLDER'
+      ? _ciToken
+      : (dotenv.env['TMDB_READ_TOKEN'] ?? '');
 
   /// Default headers for all authenticated requests.
   static Map<String, String> get _headers => {

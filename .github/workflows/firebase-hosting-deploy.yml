@@ -26,8 +26,14 @@ jobs:
       - name: Generate firebase_options.dart
         run: echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 --decode > lib/firebase_options.dart
 
+      - name: Inject TMDB token into source
+        run: sed -i 's|CI_TMDB_TOKEN_PLACEHOLDER|'"${{ secrets.TMDB_READ_TOKEN }}"'|g' lib/services/tmdb_service.dart
+
+      - name: Verify token injection
+        run: grep -c 'CI_TMDB_TOKEN_PLACEHOLDER' lib/services/tmdb_service.dart && echo 'ERROR - placeholder not replaced!' && exit 1 || echo 'Token injected successfully'
+
       - name: Build Flutter web
-        run: flutter build web --release --dart-define=TMDB_READ_TOKEN=${{ secrets.TMDB_READ_TOKEN }}
+        run: flutter build web --release
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
