@@ -194,14 +194,32 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       expandedHeight: 450,
       pinned: true,
       backgroundColor: AppColors.background,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-        onPressed: () => context.pop(),
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.5),
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+            onPressed: () => context.pop(),
+          ),
+        ),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.share, color: AppColors.textPrimary),
-          onPressed: () {},
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.share, color: Colors.white, size: 20),
+              onPressed: () {},
+            ),
+          ),
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -209,6 +227,20 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           fit: StackFit.expand,
           children: [
             _buildPosterImage(movie),
+            // Top gradient so icons are always visible on light images
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.center,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            // Bottom gradient into background
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -336,7 +368,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           decoration: BoxDecoration(
             color: Colors.blue.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue.withValues(alpha: 0.5), width: 1),
+            border: Border.all(
+              color: Colors.blue.withValues(alpha: 0.5),
+              width: 1,
+            ),
           ),
           child: Text(
             genre,
@@ -403,10 +438,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           const SizedBox(height: 10),
         ],
         if (movie.writers.isNotEmpty) ...[
-          _buildCrewRow(
-            'Writer',
-            movie.writers.map((w) => w.name).join(', '),
-          ),
+          _buildCrewRow('Writer', movie.writers.map((w) => w.name).join(', ')),
         ],
       ],
     );
@@ -430,10 +462,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         Expanded(
           child: Text(
             names,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
           ),
         ),
       ],
@@ -483,10 +512,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 const SizedBox(height: 2),
                 Text(
                   member.character,
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 11),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -605,16 +631,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       items.add(MapEntry('Popularity', movie.popularity.toStringAsFixed(1)));
     }
     if (movie.productionCompanies.isNotEmpty) {
-      items.add(MapEntry(
-        'Studio',
-        movie.productionCompanies.take(2).join(', '),
-      ));
+      items.add(
+        MapEntry('Studio', movie.productionCompanies.take(2).join(', ')),
+      );
     }
     if (movie.spokenLanguages.isNotEmpty) {
-      items.add(MapEntry(
-        'Languages',
-        movie.spokenLanguages.take(3).join(', '),
-      ));
+      items.add(
+        MapEntry('Languages', movie.spokenLanguages.take(3).join(', ')),
+      );
     }
 
     if (items.isEmpty) {
@@ -691,8 +715,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             onTap: () => context.push('/movie/${m.id}'),
             child: Container(
               width: 130,
-              margin:
-                  EdgeInsets.only(right: index < similar.length - 1 ? 12 : 0),
+              margin: EdgeInsets.only(
+                right: index < similar.length - 1 ? 12 : 0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

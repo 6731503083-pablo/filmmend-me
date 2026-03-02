@@ -212,28 +212,35 @@ class MovieModel {
       status: json['status'] as String?,
       originalLanguage: json['original_language'] as String?,
       popularity: ((json['popularity'] ?? 0) as num).toDouble(),
-      productionCompanies: (json['production_companies'] as List<dynamic>?)
+      productionCompanies:
+          (json['production_companies'] as List<dynamic>?)
               ?.map((c) => (c as Map<String, dynamic>)['name'] as String)
               .toList() ??
           [],
-      spokenLanguages: (json['spoken_languages'] as List<dynamic>?)
+      spokenLanguages:
+          (json['spoken_languages'] as List<dynamic>?)
               ?.map(
-                  (l) => (l as Map<String, dynamic>)['english_name'] as String)
+                (l) => (l as Map<String, dynamic>)['english_name'] as String,
+              )
               .toList() ??
           [],
-      cast: (json['credits']?['cast'] as List<dynamic>?)
+      cast:
+          (json['credits']?['cast'] as List<dynamic>?)
               ?.map((c) => CastMember.fromJson(c as Map<String, dynamic>))
               .toList() ??
           [],
-      crew: (json['credits']?['crew'] as List<dynamic>?)
+      crew:
+          (json['credits']?['crew'] as List<dynamic>?)
               ?.map((c) => CrewMember.fromJson(c as Map<String, dynamic>))
               .toList() ??
           [],
-      similarMovies: (json['similar']?['results'] as List<dynamic>?)
+      similarMovies:
+          (json['similar']?['results'] as List<dynamic>?)
               ?.map((m) => MovieModel.fromJson(m as Map<String, dynamic>))
               .toList() ??
           [],
-      videos: (json['videos']?['results'] as List<dynamic>?)
+      videos:
+          (json['videos']?['results'] as List<dynamic>?)
               ?.map((v) => MovieVideo.fromJson(v as Map<String, dynamic>))
               .toList() ??
           [],
@@ -292,11 +299,13 @@ class MovieModel {
 
   /// Get the first YouTube trailer, if available.
   MovieVideo? get trailer {
-    final trailers =
-        videos.where((v) => v.site == 'YouTube' && v.type == 'Trailer');
+    final trailers = videos.where(
+      (v) => v.site == 'YouTube' && v.type == 'Trailer',
+    );
     if (trailers.isNotEmpty) return trailers.first;
-    final teasers =
-        videos.where((v) => v.site == 'YouTube' && v.type == 'Teaser');
+    final teasers = videos.where(
+      (v) => v.site == 'YouTube' && v.type == 'Teaser',
+    );
     if (teasers.isNotEmpty) return teasers.first;
     return null;
   }

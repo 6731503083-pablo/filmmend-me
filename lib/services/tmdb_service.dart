@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -46,40 +47,74 @@ class TmdbService {
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
-  /// Discover movies filtered by mood (→ genres) and a minimum runtime in minutes.
-  /// Genres are joined with '|' (OR logic) so results are broad.
-  /// Returns up to 20 movies (one page from TMDB).
+  /// Discover movies filtered by mood (→ genres) and a minimum runtime.
+  /// Prioritises English movies; fills remaining slots with highly-rated
+  /// non-English titles.  Each call picks a random page so results differ
+  /// even for the same mood/runtime combination.
   Future<List<MovieModel>> discoverMovies({
     required String mood,
     int? minMinutes,
-    int page = 1,
+    String? language,
   }) async {
-    // Use '|' = OR so a movie only needs to match one of the mood genres.
     final genres = (moodGenres[mood] ?? []).join('|');
+    final rng = Random();
 
-    final queryParams = <String, String>{
+    // -- 1. English movies (random page 1-5) --
+    final enPage = rng.nextInt(5) + 1;
+    final enParams = <String, String>{
       'sort_by': 'vote_average.desc',
       'vote_count.gte': '200',
       'vote_average.gte': '6.0',
-      'page': '$page',
+      'with_original_language': language ?? 'en',
+      'page': '$enPage',
       if (genres.isNotEmpty) 'with_genres': genres,
-      // Minimum runtime: movies must be AT LEAST this long
       if (minMinutes != null && minMinutes > 0)
         'with_runtime.gte': '$minMinutes',
     };
-
-    final uri = Uri.parse(
-      '$_baseUrl/discover/movie',
-    ).replace(queryParameters: queryParams);
-
-    final response = await http.get(uri, headers: _headers);
-    _checkStatus(response);
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final results = data['results'] as List<dynamic>;
-    return results
+    final enUri = Uri.parse('$_baseUrl/discover/movie')
+        .replace(queryParameters: enParams);
+    final enResponse = await http.get(enUri, headers: _headers);
+    _checkStatus(enResponse);
+    final enData = jsonDecode(enResponse.body) as Map<String, dynamic>;
+    final enResults = (enData['results'] as List<dynamic>)
         .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
         .toList();
+
+    // If a specific language filter was applied, return those results directly.
+    if (language != null) {
+      enResults.shuffle(rng);
+      return enResults;
+    }
+
+    // -- 2. High-rated non-English movies (random page 1-3) --
+    final intlPage = rng.nextInt(3) + 1;
+    final intlParams = <String, String>{
+      'sort_by': 'vote_average.desc',
+      'vote_count.gte': '500',
+      'vote_average.gte': '7.5',
+      'without_original_language': 'en',
+      'page': '$intlPage',
+      if (genres.isNotEmpty) 'with_genres': genres,
+      if (minMinutes != null && minMinutes > 0)
+        'with_runtime.gte': '$minMinutes',
+    };
+    final intlUri = Uri.parse('$_baseUrl/discover/movie')
+        .replace(queryParameters: intlParams);
+    final intlResponse = await http.get(intlUri, headers: _headers);
+    _checkStatus(intlResponse);
+    final intlData = jsonDecode(intlResponse.body) as Map<String, dynamic>;
+    final intlResults = (intlData['results'] as List<dynamic>)
+        .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    // -- 3. Merge: English first, then sprinkle in international titles --
+    // Keep up to ~15 English + up to ~5 international, then shuffle.
+    final merged = <MovieModel>[
+      ...enResults.take(15),
+      ...intlResults.take(5),
+    ];
+    merged.shuffle(rng);
+    return merged;
   }
 
   /// Fetch full movie details including runtime, credits, and similar movies.
