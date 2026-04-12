@@ -26,6 +26,16 @@ class TmdbService {
     'accept': 'application/json',
   };
 
+  static void _ensureTokenConfigured() {
+    if (_token.trim().isEmpty) {
+      throw const TmdbException(
+        statusCode: 0,
+        message:
+            'Movie service is not configured. Please contact support or try again later.',
+      );
+    }
+  }
+
   // ── Mood → Genre IDs ────────────────────────────────────────────────────────
   // TMDB genre IDs reference:
   //   28 Action | 12 Adventure | 16 Animation | 35 Comedy | 80 Crime
@@ -64,6 +74,7 @@ class TmdbService {
     int? minMinutes,
     String? language,
   }) async {
+    _ensureTokenConfigured();
     final genres = (moodGenres[mood] ?? []).join('|');
     final rng = Random();
 
@@ -127,6 +138,7 @@ class TmdbService {
   /// Fetch full movie details including runtime, credits, and similar movies.
   /// Uses `append_to_response` to get everything in a single API call.
   Future<MovieModel> getMovieDetails(int movieId) async {
+    _ensureTokenConfigured();
     final uri = Uri.parse('$_baseUrl/movie/$movieId').replace(
       queryParameters: {'append_to_response': 'credits,similar,videos'},
     );
@@ -139,6 +151,7 @@ class TmdbService {
 
   /// Search movies by a text query.
   Future<List<MovieModel>> searchMovies(String query, {int page = 1}) async {
+    _ensureTokenConfigured();
     final uri = Uri.parse(
       '$_baseUrl/search/movie',
     ).replace(queryParameters: {'query': query, 'page': '$page'});
@@ -155,6 +168,7 @@ class TmdbService {
 
   /// Get popular movies (useful for default/fallback lists).
   Future<List<MovieModel>> getPopularMovies({int page = 1}) async {
+    _ensureTokenConfigured();
     final uri = Uri.parse(
       '$_baseUrl/movie/popular',
     ).replace(queryParameters: {'page': '$page'});

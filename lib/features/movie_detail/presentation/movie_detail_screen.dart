@@ -22,12 +22,23 @@ class MovieDetailScreen extends StatefulWidget {
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
   late Future<MovieModel> _movieFuture;
   MovieModel? _movie;
+  bool _isWatchlistBusy = false;
   final _service = TmdbService();
 
   @override
   void initState() {
     super.initState();
-    _movieFuture = _service.getMovieDetails(int.parse(widget.movieId));
+    _movieFuture = _loadMovieDetails();
+  }
+
+  Future<MovieModel> _loadMovieDetails() {
+    final parsedId = int.tryParse(widget.movieId);
+    if (parsedId == null) {
+      return Future<MovieModel>.error(
+        const FormatException('Invalid movie id. Please try another movie.'),
+      );
+    }
+    return _service.getMovieDetails(parsedId);
   }
 
   @override
@@ -367,24 +378,45 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         return SizedBox(
           width: double.infinity,
           child: AdaptiveButton(
-            onPressed: () async {
-              if (inWatchlist) {
-                await ws.removeMovie(movieId);
-              } else {
-                if (_movie != null) {
-                  await ws.addMovie(
-                    movieId: movieId,
-                    title: _movie!.title,
-                    posterPath: _movie!.posterPath,
-                    rating: _movie!.voteAverage,
-                    releaseDate: _movie!.releaseDate,
-                    genres: _movie!.genres,
-                    runtime: _movie!.runtimeFormatted,
-                  );
-                }
-              }
-            },
-            label: inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist',
+            onPressed: _isWatchlistBusy
+                ? null
+                : () async {
+                    if (_movie == null) return;
+                    setState(() => _isWatchlistBusy = true);
+                    try {
+                      if (inWatchlist) {
+                        await ws.removeMovie(movieId);
+                      } else {
+                        await ws.addMovie(
+                          movieId: movieId,
+                          title: _movie!.title,
+                          posterPath: _movie!.posterPath,
+                          rating: _movie!.voteAverage,
+                          releaseDate: _movie!.releaseDate,
+                          genres: _movie!.genres,
+                          runtime: _movie!.runtimeFormatted,
+                        );
+                      }
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Could not update watchlist. Please try again.',
+                          ),
+                        ),
+                      );
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isWatchlistBusy = false);
+                      }
+                    }
+                  },
+            label: _isWatchlistBusy
+                ? 'Updating...'
+                : inWatchlist
+                ? 'Remove from Watchlist'
+                : 'Add to Watchlist',
             style: AdaptiveButtonStyle.filled,
           ),
         );

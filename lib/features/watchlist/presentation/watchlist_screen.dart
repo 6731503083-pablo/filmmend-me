@@ -84,7 +84,17 @@ class WatchlistScreen extends StatelessWidget {
                       child: const Icon(Icons.delete, color: Colors.red),
                     ),
                     onDismissed: (_) {
-                      ws.removeMovie(movie['movieId'].toString());
+                      final movieId = movie['movieId'].toString();
+                      ws.removeMovie(movieId).catchError((_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Could not remove from watchlist. Please try again.',
+                            ),
+                          ),
+                        );
+                      });
                     },
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 12),
