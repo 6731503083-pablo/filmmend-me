@@ -64,7 +64,7 @@ class MovieCard extends StatelessWidget {
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.dividerColor.withOpacity(0.1),
+              color: theme.dividerColor.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -77,7 +77,7 @@ class MovieCard extends StatelessWidget {
                 child: Container(
                   width: 80,
                   height: 120,
-                  color: theme.dividerColor.withOpacity(0.2),
+                  color: theme.dividerColor.withValues(alpha: 0.2),
                   child: posterUrl.isNotEmpty
                       ? Image.network(
                           posterUrl,
@@ -86,7 +86,9 @@ class MovieCard extends StatelessWidget {
                             return Icon(
                               Icons.movie,
                               size: 40,
-                              color: theme.iconTheme.color?.withOpacity(0.5),
+                              color: theme.iconTheme.color?.withValues(
+                                alpha: 0.5,
+                              ),
                             );
                           },
                           loadingBuilder: (context, child, loadingProgress) {
@@ -107,7 +109,7 @@ class MovieCard extends StatelessWidget {
                       : Icon(
                           Icons.movie,
                           size: 40,
-                          color: theme.iconTheme.color?.withOpacity(0.5),
+                          color: theme.iconTheme.color?.withValues(alpha: 0.5),
                         ),
                 ),
               ),
@@ -137,7 +139,7 @@ class MovieCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: colorScheme.primary.withOpacity(0.2),
+                            color: colorScheme.primary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
@@ -164,7 +166,9 @@ class MovieCard extends StatelessWidget {
                         Text(
                           runtime,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                         ),
                       ],
@@ -181,14 +185,14 @@ class MovieCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.dividerColor.withOpacity(0.2),
+                            color: theme.dividerColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             genre,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.7,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.7,
                               ),
                               fontSize: 11,
                             ),
@@ -202,7 +206,7 @@ class MovieCard extends StatelessWidget {
               // Chevron Icon
               Icon(
                 Icons.chevron_right,
-                color: theme.iconTheme.color?.withOpacity(0.4),
+                color: theme.iconTheme.color?.withValues(alpha: 0.4),
                 size: 24,
               ),
             ],

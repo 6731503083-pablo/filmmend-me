@@ -34,7 +34,7 @@ class GradientButton extends StatelessWidget {
         boxShadow: isEnabled
             ? [
                 BoxShadow(
-                  color: colors.first.withOpacity(0.4),
+                  color: colors.first.withValues(alpha: 0.4),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

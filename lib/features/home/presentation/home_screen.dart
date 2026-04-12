@@ -207,77 +207,90 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMoodGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: _moods.length,
-      itemBuilder: (context, index) {
-        final mood = _moods[index];
-        final isSelected = selectedMood == mood['label'];
-        final gradientColors = (mood['gradient'] as List).cast<Color>();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 380;
+        final crossAxisCount = isCompact ? 3 : 4;
+        final iconBoxSize = isCompact ? 60.0 : 64.0;
 
-        return GestureDetector(
-          onTap: () => setState(() => selectedMood = mood['label'] as String),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: gradientColors,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: isSelected ? null : AppColors.glassFill,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.glassHighlight
-                        : AppColors.glassBorder,
-                    width: 1.5,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: gradientColors.first.withOpacity(0.4),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Icon(
-                  mood['icon'] as IconData,
-                  color: AppColors.textPrimary,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                mood['label'] as String,
-                style: TextStyle(
-                  color: isSelected
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: isCompact ? 0.95 : 0.85,
           ),
+          itemCount: _moods.length,
+          itemBuilder: (context, index) {
+            final mood = _moods[index];
+            final isSelected = selectedMood == mood['label'];
+            final gradientColors = (mood['gradient'] as List).cast<Color>();
+
+            return GestureDetector(
+              onTap: () =>
+                  setState(() => selectedMood = mood['label'] as String),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: iconBoxSize,
+                    height: iconBoxSize,
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: gradientColors,
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isSelected ? null : AppColors.glassFill,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.glassHighlight
+                            : AppColors.glassBorder,
+                        width: 1.5,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: gradientColors.first.withValues(
+                                  alpha: 0.4,
+                                ),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Icon(
+                      mood['icon'] as IconData,
+                      color: AppColors.textPrimary,
+                      size: isCompact ? 28 : 30,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    mood['label'] as String,
+                    style: TextStyle(
+                      color: isSelected
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -332,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
               activeTrackColor: AppColors.primary,
               inactiveTrackColor: AppColors.glassBorder,
               thumbColor: AppColors.textPrimary,
-              overlayColor: AppColors.primary.withOpacity(0.2),
+              overlayColor: AppColors.primary.withValues(alpha: 0.2),
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
               trackHeight: 6,
             ),

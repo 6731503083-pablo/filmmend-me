@@ -57,7 +57,7 @@ class MovieMosaicHeader extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    AppColors.background.withOpacity(0.65),
+                    AppColors.background.withValues(alpha: 0.65),
                     AppColors.background,
                   ],
                 ),
@@ -87,7 +87,7 @@ class _PosterTile extends StatelessWidget {
       child: Center(
         child: Icon(
           Icons.movie_rounded,
-          color: Colors.white.withOpacity(0.07),
+          color: Colors.white.withValues(alpha: 0.07),
           size: 42,
         ),
       ),
@@ -115,11 +115,7 @@ class FilmmendBrandLogo extends StatelessWidget {
   final double imageSize;
   final double fontSize;
 
-  const FilmmendBrandLogo({
-    super.key,
-    this.imageSize = 32,
-    this.fontSize = 24,
-  });
+  const FilmmendBrandLogo({super.key, this.imageSize = 32, this.fontSize = 24});
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +172,7 @@ class AccentButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(40),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.35),
+              color: AppColors.primary.withValues(alpha: 0.35),
               blurRadius: 18,
               offset: const Offset(0, 7),
             ),
@@ -238,12 +234,12 @@ class AuthField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
             fontSize: 15,
           ),
           prefixIcon: Icon(
             icon,
-            color: Colors.white.withOpacity(0.35),
+            color: Colors.white.withValues(alpha: 0.35),
             size: 20,
           ),
           suffixIcon: onToggleObscure != null
@@ -252,7 +248,7 @@ class AuthField extends StatelessWidget {
                     obscure
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    color: Colors.white.withOpacity(0.35),
+                    color: Colors.white.withValues(alpha: 0.35),
                     size: 20,
                   ),
                   onPressed: onToggleObscure,
