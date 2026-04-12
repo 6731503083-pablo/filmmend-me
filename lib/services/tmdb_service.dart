@@ -17,9 +17,8 @@ class TmdbService {
   );
 
   /// Returns the API read-access token.
-  static String get _token => _ciToken.startsWith('__')
-      ? _dartDefineToken
-      : _ciToken;
+  static String get _token =>
+      _ciToken.startsWith('__') ? _dartDefineToken : _ciToken;
 
   /// Default headers for all authenticated requests.
   static Map<String, String> get _headers => {
