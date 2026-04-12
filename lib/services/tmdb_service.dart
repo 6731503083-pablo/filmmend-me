@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/movie_model.dart';
@@ -10,12 +9,16 @@ class TmdbService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
 
   /// CI injects the real token by replacing __TMDB_TOKEN__ via sed.
-  /// For local dev, dotenv is used as fallback.
+  /// For local dev/release overrides, use --dart-define=TMDB_READ_TOKEN=...
   static const String _ciToken = '__TMDB_TOKEN__';
+  static const String _dartDefineToken = String.fromEnvironment(
+    'TMDB_READ_TOKEN',
+    defaultValue: '',
+  );
 
   /// Returns the API read-access token.
   static String get _token => _ciToken.startsWith('__')
-      ? (dotenv.env['TMDB_READ_TOKEN'] ?? '')
+      ? _dartDefineToken
       : _ciToken;
 
   /// Default headers for all authenticated requests.
