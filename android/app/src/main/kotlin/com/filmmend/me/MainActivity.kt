@@ -1,4 +1,4 @@
-package com.example.filmmend_me
+package com.filmmend.me
 
 import io.flutter.embedding.android.FlutterActivity
 
