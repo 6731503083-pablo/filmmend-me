@@ -82,6 +82,8 @@ class MovieCard extends StatelessWidget {
                       ? Image.network(
                           posterUrl,
                           fit: BoxFit.cover,
+                          cacheWidth: 240,
+                          cacheHeight: 360,
                           errorBuilder: (context, error, stackTrace) {
                             return Icon(
                               Icons.movie,

@@ -33,6 +33,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -69,6 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
           // Floating orbs for depth
           _FloatingOrb(
             controller: _controller,
+            screenSize: screenSize,
             size: 260,
             color: const Color(0xFF0891B2),
             startX: 0.7,
@@ -76,6 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           _FloatingOrb(
             controller: _controller,
+            screenSize: screenSize,
             size: 200,
             color: const Color(0xFF06B6D4),
             startX: 0.2,
@@ -84,6 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           _FloatingOrb(
             controller: _controller,
+            screenSize: screenSize,
             size: 140,
             color: const Color(0xFF4A90E2),
             startX: 0.5,
@@ -201,6 +206,7 @@ class _SplashScreenState extends State<SplashScreen>
 
 class _FloatingOrb extends StatelessWidget {
   final AnimationController controller;
+  final Size screenSize;
   final double size;
   final Color color;
   final double startX;
@@ -209,6 +215,7 @@ class _FloatingOrb extends StatelessWidget {
 
   const _FloatingOrb({
     required this.controller,
+    required this.screenSize,
     required this.size,
     required this.color,
     required this.startX,
@@ -224,7 +231,6 @@ class _FloatingOrb extends StatelessWidget {
         final phase = (controller.value + phaseOffset) % 1.0;
         final dx = math.sin(phase * 2 * math.pi) * 30;
         final dy = math.cos(phase * 2 * math.pi) * 20;
-        final screenSize = MediaQuery.of(context).size;
 
         return Positioned(
           left: screenSize.width * startX - size / 2 + dx,
