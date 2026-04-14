@@ -20,7 +20,7 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: RouteNames.splash,
+  initialLocation: RouteNames.home,
 
   routes: [
     // Splash screen (outside shell)
