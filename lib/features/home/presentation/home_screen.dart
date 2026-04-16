@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/firebase/firebase_safe.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
@@ -95,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVerificationBanner() {
-    final user = FirebaseAuth.instance.currentUser;
+    final User? user = safeCurrentUser();
     if (_bannerDismissed || user == null || user.emailVerified) {
       return const SizedBox.shrink();
     }

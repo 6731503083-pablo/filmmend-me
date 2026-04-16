@@ -1,6 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../firebase/firebase_safe.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/watchlist/presentation/watchlist_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -14,7 +14,7 @@ import 'route_names.dart';
 import 'login_required_screen.dart';
 
 /// Whether the user is currently authenticated via Firebase
-bool get isLoggedIn => FirebaseAuth.instance.currentUser != null;
+bool get isLoggedIn => safeCurrentUser() != null;
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 

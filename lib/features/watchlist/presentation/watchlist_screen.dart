@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/firebase/firebase_safe.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
@@ -23,7 +24,7 @@ class WatchlistScreen extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
+        stream: safeAuthStateChanges(),
         builder: (context, authSnap) {
           if (authSnap.data == null) {
             return const LoginRequiredView(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/firebase/firebase_safe.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/movie_model.dart';
@@ -356,7 +357,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   Widget _buildWatchlistButton(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final User? user = safeCurrentUser();
     if (user == null) {
       return SizedBox(
         width: double.infinity,
