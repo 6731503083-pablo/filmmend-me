@@ -2,6 +2,12 @@
 
 A modern Flutter movie recommendation app featuring native iOS 26 UI components with liquid glass bottom navigation.
 
+## ⚠️ Release Handover (New Mac)
+
+If you are moving development to a new laptop, read this first:
+
+- [HANDOVER_NEW_MAC.md](HANDOVER_NEW_MAC.md)
+
 ## ✨ Features
 
 - **🎭 Mood-Based Recommendations**: Select your mood and get personalized movie suggestions
