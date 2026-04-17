@@ -141,5 +141,5 @@ Whenever release process changes, update this file first.
 Current known good baseline:
 
 1. package: `com.filmmend.me`
-2. version code: `8`
+2. version code: `10`
 3. release artifact path: [build/app/outputs/bundle/release/app-release.aab](build/app/outputs/bundle/release/app-release.aab)
