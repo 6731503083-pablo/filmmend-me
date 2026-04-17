@@ -92,17 +92,15 @@ class _BootstrapLoadingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ClipOval(
-                child: SizedBox(
-                  width: 86,
-                  height: 86,
-                  child: Image(
-                    image: AssetImage('assets/logo/app_icon.png'),
-                    fit: BoxFit.cover,
-                  ),
+              SizedBox(
+                width: 150,
+                height: 150,
+                child: Image(
+                  image: AssetImage('assets/logo/brand_logo_transparent.png'),
+                  fit: BoxFit.contain,
                 ),
               ),
-              SizedBox(height: 18),
+              SizedBox(height: 14),
               SizedBox(
                 width: 28,
                 height: 28,

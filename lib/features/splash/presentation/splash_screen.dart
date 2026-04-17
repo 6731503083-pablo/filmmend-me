@@ -70,47 +70,15 @@ class _SplashScreenState extends State<SplashScreen> {
                   Spacer(flex: compactLayout ? 2 : 3),
 
                   // Logo
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.08),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/logo/app_icon.png',
-                        width: 54,
-                        height: 54,
-                        fit: BoxFit.cover,
-                      ),
+                  SizedBox(
+                    width: compactLayout ? 160 : 190,
+                    height: compactLayout ? 160 : 190,
+                    child: Image.asset(
+                      'assets/logo/brand_logo_transparent.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  SizedBox(height: compactLayout ? 18 : 24),
-
-                  // App name
-                  Text(
-                    'Filmmend Me',
-                    style: TextStyle(
-                      fontSize: compactLayout ? 30 : 36,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  SizedBox(height: compactLayout ? 6 : 8),
-                  Container(
-                    width: 40,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0891B2), Color(0xFF06B6D4)],
-                      ),
-                    ),
-                  ),
+                  SizedBox(height: compactLayout ? 8 : 12),
 
                   Spacer(flex: compactLayout ? 0 : 1),
 
