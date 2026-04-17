@@ -78,42 +78,7 @@ class _BootstrapLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0E21),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0A0E21), Color(0xFF0D1B3E), Color(0xFF0A3D5C)],
-          ),
-        ),
-        child: const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 150,
-                height: 150,
-                child: Image(
-                  image: AssetImage('assets/logo/brand_logo_transparent.png'),
-                  fit: BoxFit.contain,
-                ),
-              ),
-              SizedBox(height: 14),
-              SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.6,
-                  color: Color(0xFF06B6D4),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const Scaffold(backgroundColor: Color(0xFF0A0E21));
   }
 }
 
