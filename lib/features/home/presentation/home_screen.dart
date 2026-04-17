@@ -268,11 +268,14 @@ class _HomeScreenState extends State<HomeScreen> {
           itemBuilder: (context, index) {
             final mood = _moods[index];
             final isSelected = selectedMood == mood['label'];
+            final moodLocked = selectedMood != null;
             final gradientColors = (mood['gradient'] as List).cast<Color>();
 
             return GestureDetector(
-              onTap: () =>
-                  setState(() => selectedMood = mood['label'] as String),
+              onTap: moodLocked
+                  ? null
+                  : () =>
+                        setState(() => selectedMood = mood['label'] as String),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
