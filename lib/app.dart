@@ -92,11 +92,24 @@ class _BootstrapLoadingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: Color(0xFF06B6D4)),
-              SizedBox(height: 16),
-              Text(
-                'Starting Filmmend Me...',
-                style: TextStyle(color: Colors.white),
+              ClipOval(
+                child: SizedBox(
+                  width: 86,
+                  height: 86,
+                  child: Image(
+                    image: AssetImage('assets/logo/app_icon.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              SizedBox(height: 18),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.6,
+                  color: Color(0xFF06B6D4),
+                ),
               ),
             ],
           ),
