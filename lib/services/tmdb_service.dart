@@ -69,14 +69,14 @@ class TmdbService {
     'Thoughtful': [18, 36, 9648, 99],
     // Exploratory — documentary, mystery, sci-fi, history, fantasy
     'Curious': [99, 9648, 878, 36, 14],
-    // Reflective comfort — drama, romance, family, music
-    'Nostalgic': [18, 10749, 10751, 10402],
-    // Journey and discovery — adventure, action, fantasy, sci-fi
-    'Adventurous': [12, 28, 14, 878],
+    // Reflective comfort — drama, family stories, music, history
+    'Nostalgic': [18, 10751, 10402, 36],
+    // Journey and discovery — adventure first, then fantasy/sci-fi/action
+    'Adventurous': [12, 14, 878, 28],
     // Dark and tense — horror, thriller, mystery
     'Spooky': [27, 53, 9648],
-    // Uplifting and motivating — biography-like, history, drama, documentary
-    'Inspired': [36, 18, 99],
+    // Uplifting and motivating — history/biography tone, drama, documentary, music
+    'Inspired': [36, 18, 99, 10402],
   };
 
   // ── Public API ───────────────────────────────────────────────────────────────

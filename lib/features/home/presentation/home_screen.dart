@@ -33,19 +33,19 @@ class _HomeScreenState extends State<HomeScreen> {
       'gradient': [Color(0xFFf093fb), Color(0xFFF5576C)],
     },
     {
-      'label': 'Sad',
-      'icon': Icons.sentiment_dissatisfied,
-      'gradient': [Color(0xFF4facfe), Color(0xFF00f2fe)],
-    },
-    {
-      'label': 'Excited',
-      'icon': Icons.celebration,
-      'gradient': [Color(0xFFfa709a), Color(0xFFfee140)],
-    },
-    {
       'label': 'Romantic',
       'icon': Icons.favorite,
       'gradient': [Color(0xFFff9a9e), Color(0xFFfad0c4)],
+    },
+    {
+      'label': 'Nostalgic',
+      'icon': Icons.history_edu,
+      'gradient': [Color(0xFF8E7AB5), Color(0xFFB784B7)],
+    },
+    {
+      'label': 'Sad',
+      'icon': Icons.sentiment_dissatisfied,
+      'gradient': [Color(0xFF4facfe), Color(0xFF00f2fe)],
     },
     {
       'label': 'Tired',
@@ -63,9 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'gradient': [Color(0xFF2193b0), Color(0xFF6dd5ed)],
     },
     {
-      'label': 'Nostalgic',
-      'icon': Icons.auto_stories,
-      'gradient': [Color(0xFF8E7AB5), Color(0xFFB784B7)],
+      'label': 'Excited',
+      'icon': Icons.celebration,
+      'gradient': [Color(0xFFfa709a), Color(0xFFfee140)],
     },
     {
       'label': 'Adventurous',
@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
     },
     {
       'label': 'Inspired',
-      'icon': Icons.lightbulb,
+      'icon': Icons.emoji_objects,
       'gradient': [Color(0xFFFFB75E), Color(0xFFED8F03)],
     },
   ];
