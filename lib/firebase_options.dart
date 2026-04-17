@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
@@ -8,10 +9,11 @@ class DefaultFirebaseOptions {
     }
 
     switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-      case TargetPlatform.android:
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.windows:
@@ -40,4 +42,11 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.filmmendMe',
   );
 
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBslJQWAwcLMB7xFoZ2hY1ZljhGW2wAV90',
+    appId: '1:316474289696:android:d2bdb39309e2376e17d645',
+    messagingSenderId: '316474289696',
+    projectId: 'filmmend-me',
+    storageBucket: 'filmmend-me.firebasestorage.app',
+  );
 }

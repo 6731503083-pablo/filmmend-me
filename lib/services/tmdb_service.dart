@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/movie_model.dart';
@@ -15,10 +16,17 @@ class TmdbService {
     'TMDB_READ_TOKEN',
     defaultValue: '',
   );
+  static String get _dotenvToken {
+    if (!dotenv.isInitialized) return '';
+    return dotenv.env['TMDB_READ_TOKEN']?.trim() ?? '';
+  }
 
   /// Returns the API read-access token.
-  static String get _token =>
-      _ciToken.startsWith('__') ? _dartDefineToken : _ciToken;
+  static String get _token {
+    if (!_ciToken.startsWith('__')) return _ciToken;
+    if (_dartDefineToken.trim().isNotEmpty) return _dartDefineToken;
+    return _dotenvToken;
+  }
 
   /// Default headers for all authenticated requests.
   static Map<String, String> get _headers => {

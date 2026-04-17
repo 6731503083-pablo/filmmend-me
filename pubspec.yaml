@@ -17,6 +17,7 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -39,4 +40,5 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - assets/logo/
