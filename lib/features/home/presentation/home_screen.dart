@@ -62,6 +62,26 @@ class _HomeScreenState extends State<HomeScreen> {
       'icon': Icons.visibility,
       'gradient': [Color(0xFF2193b0), Color(0xFF6dd5ed)],
     },
+    {
+      'label': 'Nostalgic',
+      'icon': Icons.auto_stories,
+      'gradient': [Color(0xFF8E7AB5), Color(0xFFB784B7)],
+    },
+    {
+      'label': 'Adventurous',
+      'icon': Icons.explore,
+      'gradient': [Color(0xFF11998E), Color(0xFF38EF7D)],
+    },
+    {
+      'label': 'Spooky',
+      'icon': Icons.nightlight_round,
+      'gradient': [Color(0xFF434343), Color(0xFF000000)],
+    },
+    {
+      'label': 'Inspired',
+      'icon': Icons.lightbulb,
+      'gradient': [Color(0xFFFFB75E), Color(0xFFED8F03)],
+    },
   ];
 
   @override
