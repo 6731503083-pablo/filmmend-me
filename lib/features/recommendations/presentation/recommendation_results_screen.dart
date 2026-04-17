@@ -37,9 +37,14 @@ class _RecommendationResultsScreenState
   }
 
   void _load() {
-    if (_activeMood != null) {
+    final hasFilters =
+        _activeMood != null ||
+        (_activeMinMinutes != null && _activeMinMinutes! > 0) ||
+        _activeLanguage != null;
+
+    if (hasFilters) {
       _moviesFuture = _service.discoverMovies(
-        mood: _activeMood!,
+        mood: _activeMood,
         minMinutes: _activeMinMinutes,
         language: _activeLanguage,
       );

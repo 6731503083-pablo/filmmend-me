@@ -78,12 +78,12 @@ class TmdbService {
   /// non-English titles.  Each call picks a random page so results differ
   /// even for the same mood/runtime combination.
   Future<List<MovieModel>> discoverMovies({
-    required String mood,
+    String? mood,
     int? minMinutes,
     String? language,
   }) async {
     _ensureTokenConfigured();
-    final genres = (moodGenres[mood] ?? []).join('|');
+    final genres = mood == null ? '' : (moodGenres[mood] ?? []).join('|');
     final rng = Random();
 
     // -- 1. English movies (random page 1-5) --
