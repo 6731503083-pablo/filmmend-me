@@ -52,7 +52,7 @@ class LoginRequiredView extends StatelessWidget {
             const SizedBox(height: 32),
             GradientButton(
               text: 'Sign In',
-              onPressed: () => context.go(RouteNames.login),
+              onPressed: () => context.push(RouteNames.login),
             ),
           ],
         ),

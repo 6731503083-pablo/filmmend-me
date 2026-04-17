@@ -22,13 +22,22 @@ class _FilmmendMeAppState extends State<FilmmendMeApp> {
     _bootstrapFuture = _initializeFirebase();
   }
 
-  Future<void> _initializeFirebase() {
-    return Firebase.initializeApp(
+  Future<void> _initializeFirebase() async {
+    // We run Firebase initialization and an artificial delay in parallel.
+    // This guarantees our beautiful new splash animation actually has time to play
+    // (Firebase usually initializes in <50ms, which skips the animation entirely!)
+    final firebaseInit = Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(
+    );
+
+    final minSplashDuration = Future.delayed(
+      const Duration(milliseconds: 3500),
+    );
+
+    await Future.wait([firebaseInit, minSplashDuration]).timeout(
       const Duration(seconds: 12),
       onTimeout: () {
-        throw TimeoutException('Firebase initialization timed out');
+        throw TimeoutException('Initialization timed out');
       },
     );
   }
@@ -73,12 +82,74 @@ class _FilmmendMeAppState extends State<FilmmendMeApp> {
   }
 }
 
-class _BootstrapLoadingScreen extends StatelessWidget {
+class _BootstrapLoadingScreen extends StatefulWidget {
   const _BootstrapLoadingScreen();
 
   @override
+  State<_BootstrapLoadingScreen> createState() =>
+      _BootstrapLoadingScreenState();
+}
+
+class _BootstrapLoadingScreenState extends State<_BootstrapLoadingScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    );
+
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(backgroundColor: Color(0xFF0A0E21));
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0E21),
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _opacityAnimation.value,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: const Text(
+                  'FilmMend Me',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
 

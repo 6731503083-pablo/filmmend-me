@@ -37,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void _goLogin() {
     if (!mounted || _navigated) return;
     _navigated = true;
-    context.push(RouteNames.login);
+    context.go(RouteNames.login);
   }
 
   @override

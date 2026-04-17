@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:insetLeft="120dp"
-    android:insetTop="120dp"
-    android:insetRight="120dp"
-    android:insetBottom="120dp">
-    <bitmap
-        android:gravity="center"
-        android:src="@drawable/splash_logo_png" />
-</inset>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="135dp"
+        android:height="135dp"
+        android:gravity="center">
+        <bitmap
+            android:src="@drawable/splash_logo_png"
+            android:gravity="fill" />
+    </item>
+</layer-list>

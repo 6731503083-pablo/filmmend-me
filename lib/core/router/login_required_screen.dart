@@ -19,7 +19,7 @@ class LoginRequiredScreen extends StatelessWidget {
             const Text('Please log in to access this feature'),
             const SizedBox(height: 24),
             AdaptiveButton(
-              onPressed: () => context.go(RouteNames.login),
+              onPressed: () => context.push(RouteNames.login),
               label: 'Go to Login',
               style: AdaptiveButtonStyle.filled,
             ),
