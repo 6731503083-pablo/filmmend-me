@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
@@ -22,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String? selectedMood;
   double availableTime = 90;
   bool _bannerDismissed = false;
-  final Random _random = Random();
 
   static const List<Map<String, dynamic>> _moods = [
     {
@@ -102,8 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       _buildTimeSliderCard(compactLayout: compactLayout),
                       SizedBox(height: compactLayout ? 14 : 32),
                       _buildRecommendButton(compactLayout: compactLayout),
-                      const SizedBox(height: 10),
-                      _buildRandomButton(compactLayout: compactLayout),
                     ],
                   ),
                 ),
@@ -417,37 +412,6 @@ class _HomeScreenState extends State<HomeScreen> {
           : null,
       height: compactLayout ? 54 : 60,
       borderRadius: 20,
-    );
-  }
-
-  Widget _buildRandomButton({required bool compactLayout}) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: _goRandomMovie,
-        icon: const Icon(Icons.casino_rounded),
-        label: const Text('Random Movie'),
-        style: OutlinedButton.styleFrom(
-          minimumSize: Size.fromHeight(compactLayout ? 48 : 52),
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.glassBorder),
-          backgroundColor: AppColors.glassFill.withValues(alpha: 0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _goRandomMovie() {
-    final randomMood = _moods[_random.nextInt(_moods.length)]['label'] as String;
-    final randomTimes = [0, 60, 90, 120, 150];
-    final randomTime = randomTimes[_random.nextInt(randomTimes.length)];
-
-    context.go(
-      '/${RouteNames.recommendations}',
-      extra: {'mood': randomMood, 'time': randomTime},
     );
   }
 }
