@@ -2,6 +2,7 @@ import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/firebase/firebase_safe.dart';
@@ -232,7 +233,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
             child: IconButton(
               icon: const Icon(Icons.share, color: Colors.white, size: 20),
-              onPressed: () {},
+              onPressed: () {
+                final url = 'https://www.themoviedb.org/movie/${movie.id}';
+                Share.share('Check out "${movie.title}"!\n$url');
+              },
             ),
           ),
         ),
@@ -608,8 +612,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     return GestureDetector(
       onTap: () async {
         final uri = Uri.parse(trailer.youtubeUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        try {
+          final launched = await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+          if (!launched) {
+            await launchUrl(uri, mode: LaunchMode.platformDefault);
+          }
+        } catch (e) {
+          debugPrint('Could not launch trailer: $e');
         }
       },
       child: Container(
@@ -779,9 +791,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         itemBuilder: (context, index) {
           final m = similar[index];
           return GestureDetector(
-            onTap: () => context.push(
-              '/${RouteNames.recommendations}/${RouteNames.movieDetail}/${m.id}',
-            ),
+            onTap: () => context.push('/${RouteNames.movieDetail}/${m.id}'),
             child: Container(
               width: 130,
               margin: EdgeInsets.only(

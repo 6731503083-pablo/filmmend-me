@@ -165,14 +165,25 @@ class MovieCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         // Runtime
-                        Text(
-                          runtime,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
+                        if (runtime.isNotEmpty) ...[
+                          Text(
+                            '—',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Text(
+                            runtime,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 8),

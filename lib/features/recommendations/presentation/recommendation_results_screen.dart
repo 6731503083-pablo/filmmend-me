@@ -180,14 +180,10 @@ class _RecommendationResultsScreenState
                       title: movie.title,
                       posterUrl: movie.posterUrl,
                       rating: movie.voteAverage,
-                      runtime: movie.runtimeFormatted.isNotEmpty
-                          ? movie.runtimeFormatted
-                          : '—',
+                      runtime: movie.runtimeFormatted,
                       genres: movie.genres.take(3).toList(),
                       onTap: () {
-                        context.go(
-                          '/${RouteNames.recommendations}/${RouteNames.movieDetail}/${movie.id}',
-                        );
+                        context.push('/${RouteNames.movieDetail}/${movie.id}');
                       },
                     );
                   },

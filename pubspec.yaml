@@ -1,7 +1,7 @@
 name: filmmend_me
 description: "A new Flutter project."
 publish_to: "none"
-version: 1.0.1+10
+version: 1.0.2+11
 
 environment:
   sdk: ">=3.9.2 <4.0.0"
@@ -18,12 +18,14 @@ dependencies:
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
   flutter_dotenv: ^5.2.1
+  share_plus: ^13.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.7
 
 flutter_launcher_icons:
   android: true
@@ -36,6 +38,13 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/logo/app_icon.png"
+
+flutter_native_splash:
+  color: "#121A26"
+  image: "assets/logo/splash_icon.png"
+  android_12:
+    image: "assets/logo/splash_icon.png"
+    icon_background_color: "#121A26"
 
 flutter:
   uses-material-design: true

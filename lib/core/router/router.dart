@@ -45,6 +45,16 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const LoginRequiredScreen(),
     ),
 
+    // Movie Detail (outside shell so it can be pushed from any tab without branch switching)
+    GoRoute(
+      path: '/${RouteNames.movieDetail}/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final movieId = state.pathParameters['id']!;
+        return MovieDetailScreen(movieId: movieId);
+      },
+    ),
+
     // Main app with bottom navigation
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -69,17 +79,6 @@ final GoRouter appRouter = GoRouter(
                       maxMinutes: extra?['time'] as int?,
                     );
                   },
-                  routes: [
-                    // Nested route: Movie Detail
-                    GoRoute(
-                      path: '${RouteNames.movieDetail}/:id',
-                      parentNavigatorKey: _rootNavigatorKey,
-                      builder: (context, state) {
-                        final movieId = state.pathParameters['id']!;
-                        return MovieDetailScreen(movieId: movieId);
-                      },
-                    ),
-                  ],
                 ),
               ],
             ),
