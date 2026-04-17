@@ -64,6 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final compactLayout = size.height < 860;
+
     return Scaffold(
       body: GradientBackground(
         child: SafeArea(
@@ -73,17 +76,22 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildVerificationBanner(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    compactLayout ? 8 : 12,
+                    20,
+                    compactLayout ? 16 : 20,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTitle(),
-                      const SizedBox(height: 32),
-                      _buildMoodGrid(),
-                      const SizedBox(height: 40),
-                      _buildTimeSliderCard(),
-                      const SizedBox(height: 32),
-                      _buildRecommendButton(),
+                      _buildTitle(compactLayout: compactLayout),
+                      SizedBox(height: compactLayout ? 20 : 32),
+                      _buildMoodGrid(compactLayout: compactLayout),
+                      SizedBox(height: compactLayout ? 24 : 40),
+                      _buildTimeSliderCard(compactLayout: compactLayout),
+                      SizedBox(height: compactLayout ? 18 : 32),
+                      _buildRecommendButton(compactLayout: compactLayout),
                     ],
                   ),
                 ),
@@ -185,32 +193,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTitle() {
+  Widget _buildTitle({required bool compactLayout}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
         Text(
           'How are you feeling?',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 32,
+            fontSize: compactLayout ? 26 : 32,
             fontWeight: FontWeight.bold,
             height: 1.2,
           ),
         ),
-        SizedBox(height: 8),
+        SizedBox(height: compactLayout ? 6 : 8),
         Text(
           'Pick a mood to start',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: compactLayout ? 14 : 16,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildMoodGrid() {
+  Widget _buildMoodGrid({required bool compactLayout}) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 380;
+        final isCompact = constraints.maxWidth < 380 || compactLayout;
         final crossAxisCount = isCompact ? 3 : 4;
         final iconBoxSize = isCompact ? 60.0 : 64.0;
 
@@ -219,9 +230,9 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: isCompact ? 0.95 : 0.85,
+            mainAxisSpacing: isCompact ? 8 : 12,
+            crossAxisSpacing: isCompact ? 8 : 12,
+            childAspectRatio: isCompact ? 1.0 : 0.85,
           ),
           itemCount: _moods.length,
           itemBuilder: (context, index) {
@@ -272,14 +283,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: isCompact ? 28 : 30,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                    SizedBox(height: isCompact ? 4 : 6),
                   Text(
                     mood['label'] as String,
                     style: TextStyle(
                       color: isSelected
                           ? AppColors.textPrimary
                           : AppColors.textSecondary,
-                      fontSize: 12,
+                      fontSize: isCompact ? 11 : 12,
                       fontWeight: isSelected
                           ? FontWeight.w600
                           : FontWeight.w500,
@@ -297,9 +308,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTimeSliderCard() {
+  Widget _buildTimeSliderCard({required bool compactLayout}) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(compactLayout ? 16 : 20),
       decoration: BoxDecoration(
         color: AppColors.glassFill,
         borderRadius: BorderRadius.circular(20),
@@ -340,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: compactLayout ? 12 : 16),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: AppColors.primary,
@@ -357,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onChanged: (value) => setState(() => availableTime = value),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: compactLayout ? 2 : 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
@@ -380,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecommendButton() {
+  Widget _buildRecommendButton({required bool compactLayout}) {
     return GradientButton(
       text: 'Recommend Movie',
       onPressed: selectedMood != null
@@ -389,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
               extra: {'mood': selectedMood!, 'time': availableTime.toInt()},
             )
           : null,
-      height: 60,
+      height: compactLayout ? 54 : 60,
       borderRadius: 20,
     );
   }

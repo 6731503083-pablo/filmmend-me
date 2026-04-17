@@ -5,8 +5,6 @@
         <color android:color="#0A0E21" />
     </item>
     <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/ic_launcher" />
+        <drawable android:drawable="@drawable/splash_logo" />
     </item>
 </layer-list>

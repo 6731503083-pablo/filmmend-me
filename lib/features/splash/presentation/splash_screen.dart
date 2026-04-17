@@ -42,6 +42,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final compactLayout = MediaQuery.sizeOf(context).height < 860;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -62,14 +64,14 @@ class _SplashScreenState extends State<SplashScreen> {
           // Main content
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+              padding: EdgeInsets.fromLTRB(28, 0, 28, compactLayout ? 20 : 28),
               child: Column(
                 children: [
-                  const Spacer(flex: 3),
+                  Spacer(flex: compactLayout ? 2 : 3),
 
                   // Logo
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withValues(alpha: 0.08),
@@ -77,28 +79,28 @@ class _SplashScreenState extends State<SplashScreen> {
                         color: Colors.white.withValues(alpha: 0.12),
                       ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
+                    child: ClipOval(
                       child: Image.asset(
                         'assets/logo/app_icon.png',
-                        width: 64,
-                        height: 64,
+                        width: 54,
+                        height: 54,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: compactLayout ? 18 : 24),
 
                   // App name
-                  const Text(
+                  Text(
                     'Filmmend Me',
                     style: TextStyle(
-                      fontSize: 36,
+                      fontSize: compactLayout ? 30 : 36,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: compactLayout ? 6 : 8),
                   Container(
                     width: 40,
                     height: 3,
@@ -110,30 +112,30 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ),
 
-                  const Spacer(flex: 1),
+                  Spacer(flex: compactLayout ? 0 : 1),
 
                   // Tagline
-                  const Text(
+                  Text(
                     '"Find your mood.\nDiscover your film.\nFall in love with cinema."',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: compactLayout ? 14 : 16,
                       color: Color(0x99FFFFFF),
                       fontStyle: FontStyle.italic,
-                      height: 1.7,
+                      height: compactLayout ? 1.5 : 1.7,
                       letterSpacing: 0.2,
                     ),
                   ),
 
-                  const Spacer(flex: 2),
+                  Spacer(flex: compactLayout ? 1 : 2),
 
                   // Get Started button
                   AccentButton(
                     text: 'Get Started',
-                    height: 56,
+                    height: compactLayout ? 52 : 56,
                     onPressed: _goHome,
                   ),
-                  const SizedBox(height: 18),
+                  SizedBox(height: compactLayout ? 12 : 18),
 
                   // Sign In link
                   GestureDetector(
