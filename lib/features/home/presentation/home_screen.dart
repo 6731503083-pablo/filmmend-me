@@ -1,4 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/firebase/firebase_safe.dart';
@@ -65,6 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    final isAndroid =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
     final compactLayout = size.height < 860;
 
     return Scaffold(
@@ -86,11 +90,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildTitle(compactLayout: compactLayout),
-                      SizedBox(height: compactLayout ? 20 : 32),
-                      _buildMoodGrid(compactLayout: compactLayout),
-                      SizedBox(height: compactLayout ? 24 : 40),
+                      SizedBox(height: compactLayout ? 16 : 32),
+                      _buildMoodGrid(
+                        compactLayout: compactLayout,
+                        isAndroid: isAndroid,
+                      ),
+                      SizedBox(height: compactLayout ? 18 : 40),
                       _buildTimeSliderCard(compactLayout: compactLayout),
-                      SizedBox(height: compactLayout ? 18 : 32),
+                      SizedBox(height: compactLayout ? 14 : 32),
                       _buildRecommendButton(compactLayout: compactLayout),
                     ],
                   ),
@@ -218,21 +225,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMoodGrid({required bool compactLayout}) {
+  Widget _buildMoodGrid({
+    required bool compactLayout,
+    required bool isAndroid,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 380 || compactLayout;
-        final crossAxisCount = isCompact ? 3 : 4;
-        final iconBoxSize = isCompact ? 60.0 : 64.0;
+        final crossAxisCount = isAndroid ? 4 : (isCompact ? 3 : 4);
+        final iconBoxSize = isAndroid ? 54.0 : (isCompact ? 60.0 : 64.0);
 
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: isCompact ? 8 : 12,
-            crossAxisSpacing: isCompact ? 8 : 12,
-            childAspectRatio: isCompact ? 1.0 : 0.85,
+            mainAxisSpacing: isAndroid ? 6 : (isCompact ? 8 : 12),
+            crossAxisSpacing: isAndroid ? 6 : (isCompact ? 8 : 12),
+            childAspectRatio: isAndroid ? 0.9 : (isCompact ? 1.0 : 0.85),
           ),
           itemCount: _moods.length,
           itemBuilder: (context, index) {
@@ -280,17 +290,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Icon(
                       mood['icon'] as IconData,
                       color: AppColors.textPrimary,
-                      size: isCompact ? 28 : 30,
+                      size: isAndroid ? 26 : (isCompact ? 28 : 30),
                     ),
                   ),
-                    SizedBox(height: isCompact ? 4 : 6),
+                  SizedBox(height: isAndroid ? 3 : (isCompact ? 4 : 6)),
                   Text(
                     mood['label'] as String,
                     style: TextStyle(
                       color: isSelected
                           ? AppColors.textPrimary
                           : AppColors.textSecondary,
-                      fontSize: isCompact ? 11 : 12,
+                      fontSize: isAndroid ? 10 : (isCompact ? 11 : 12),
                       fontWeight: isSelected
                           ? FontWeight.w600
                           : FontWeight.w500,
