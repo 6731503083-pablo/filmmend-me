@@ -197,23 +197,58 @@ class _HomeScreenState extends State<HomeScreen> {
               letterSpacing: -0.5,
             ),
           ),
-          GestureDetector(
-            onTap: () => context.go(
-              '/${RouteNames.recommendations}',
-              extra: {'mood': null, 'time': null},
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.glassBorder,
-                borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              if (kIsWeb)
+                GestureDetector(
+                  onTap: () => context.go(RouteNames.presentation),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: AppColors.primaryGradient,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.slideshow, color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Pitch Deck',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              GestureDetector(
+                onTap: () => context.go(
+                  '/${RouteNames.recommendations}',
+                  extra: {'mood': null, 'time': null},
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBorder,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.trending_up_rounded,
+                    color: AppColors.textPrimary,
+                    size: 24,
+                  ),
+                ),
               ),
-              child: const Icon(
-                Icons.trending_up_rounded,
-                color: AppColors.textPrimary,
-                size: 24,
-              ),
-            ),
+            ],
           ),
         ],
       ),

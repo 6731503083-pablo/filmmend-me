@@ -4,6 +4,7 @@ class RouteNames {
 
   // Outside shell (no bottom nav)
   static const String splash = '/splash';
+  static const String presentation = '/presentation';
   static const String login = '/login';
   static const String register = '/register';
   static const String loginRequired = '/login-required';
