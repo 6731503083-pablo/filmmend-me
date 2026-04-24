@@ -235,7 +235,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               icon: const Icon(Icons.share, color: Colors.white, size: 20),
               onPressed: () {
                 final url = 'https://www.themoviedb.org/movie/${movie.id}';
-                Share.share('Check out "${movie.title}"!\n$url');
+                SharePlus.instance.share(
+                  ShareParams(text: 'Check out "${movie.title}"!\n$url'),
+                );
               },
             ),
           ),
@@ -366,7 +368,57 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       return SizedBox(
         width: double.infinity,
         child: AdaptiveButton(
-          onPressed: () => context.push(RouteNames.login),
+          onPressed: _isWatchlistBusy
+              ? null
+              : () async {
+                  if (_movie == null) return;
+                  setState(() => _isWatchlistBusy = true);
+                  try {
+                    await context.push<bool>(RouteNames.login);
+                    if (!mounted || safeCurrentUser() == null) return;
+
+                    final ws = WatchlistService();
+                    final movieId = widget.movieId;
+                    final alreadyInWatchlist = await ws.isInWatchlist(movieId);
+                    if (alreadyInWatchlist) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Already in your watchlist.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    await ws.addMovie(
+                      movieId: movieId,
+                      title: _movie!.title,
+                      posterPath: _movie!.posterPath,
+                      rating: _movie!.voteAverage,
+                      releaseDate: _movie!.releaseDate,
+                      genres: _movie!.genres,
+                      runtime: _movie!.runtimeFormatted,
+                    );
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Added to watchlist.')),
+                    );
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Could not update watchlist. Please try again.',
+                        ),
+                      ),
+                    );
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isWatchlistBusy = false);
+                    }
+                  }
+                },
           label: 'Sign in to add to Watchlist',
           style: AdaptiveButtonStyle.filled,
         ),

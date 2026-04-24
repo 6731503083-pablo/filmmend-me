@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/router/route_names.dart';
 
 class PresentationScreen extends StatefulWidget {
-  const PresentationScreen({Key? key}) : super(key: key);
+  const PresentationScreen({super.key});
 
   @override
   State<PresentationScreen> createState() => _PresentationScreenState();
@@ -141,7 +141,7 @@ class _PresentationScreenState extends State<PresentationScreen> {
       title: "Filmmend Me",
       subtitle: "Stop Scrolling. Start Watching.",
       description:
-          "An AI-powered movie recommendation platform designed to find the perfect film for your exact mood and available time.",
+          "A mood-first movie recommendation platform designed to find the perfect film for your exact mood and available time.",
       icon: Icons.movie_creation_outlined,
     ),
 
@@ -169,7 +169,7 @@ class _PresentationScreenState extends State<PresentationScreen> {
     const _SlideFeatureList(
       title: "Key Selling Points",
       features: [
-        "AI-Powered Matching matching human emotion to film genres.",
+        "Mood-based matching that maps how you feel to fitting film genres.",
         "Time-Scoped Filtering so you never start a movie you can't finish.",
         "One-Tap Trailer Playback to quickly vet recommendations.",
         "Seamless Watchlist Management synced across devices via Firebase.",

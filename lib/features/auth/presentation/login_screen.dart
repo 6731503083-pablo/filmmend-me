@@ -44,7 +44,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await _authService.signIn(email: email, password: password);
-      if (mounted) context.go(RouteNames.home);
+      if (!mounted) return;
+      if (context.canPop()) {
+        context.pop(true);
+      } else {
+        context.go(RouteNames.home);
+      }
     } on FirebaseAuthException catch (e) {
       setState(() => _errorMessage = AuthService.friendlyError(e));
     } catch (e) {
