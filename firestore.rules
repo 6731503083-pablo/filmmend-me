@@ -46,6 +46,7 @@ service cloud.firestore {
           'runtime',
           'addedAt'
         ]) &&
+        request.resource.id == data.movieId &&
         isString(data.movieId) &&
         isString(data.title) &&
         isNullableString(data.posterPath) &&
@@ -68,6 +69,7 @@ service cloud.firestore {
           'runtime',
           'addedAt'
         ]) &&
+        request.resource.id == request.resource.data.movieId &&
         request.resource.data.movieId == resource.data.movieId &&
         request.resource.data.addedAt == resource.data.addedAt &&
         isString(request.resource.data.title) &&
