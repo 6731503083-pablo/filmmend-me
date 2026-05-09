@@ -9,6 +9,7 @@ import '../../../core/firebase/firebase_safe.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/movie_model.dart';
+import '../../../services/auth_service.dart';
 import '../../../services/tmdb_service.dart';
 import '../../../services/watchlist_service.dart';
 
@@ -81,9 +82,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                       color: Colors.white30,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Couldn\'t load movie',
-                      style: TextStyle(
+                    Text(
+                      snapshot.error is TmdbException &&
+                              (snapshot.error as TmdbException).isNetworkError
+                          ? 'You appear to be offline'
+                          : 'Couldn\'t load movie',
+                      style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -91,7 +95,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      snapshot.error.toString(),
+                      snapshot.error is TmdbException
+                          ? (snapshot.error as TmdbException).message
+                          : 'Please try again in a moment.',
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
@@ -420,6 +426,44 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   }
                 },
           label: 'Sign in to add to Watchlist',
+          style: AdaptiveButtonStyle.filled,
+        ),
+      );
+    }
+    if (!user.emailVerified) {
+      return SizedBox(
+        width: double.infinity,
+        child: AdaptiveButton(
+          onPressed: _isWatchlistBusy
+              ? null
+              : () async {
+                  setState(() => _isWatchlistBusy = true);
+                  try {
+                    await AuthService().resendVerificationEmail();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Verification email sent.'),
+                      ),
+                    );
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Could not send verification email. Please try again.',
+                        ),
+                      ),
+                    );
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isWatchlistBusy = false);
+                    }
+                  }
+                },
+          label: _isWatchlistBusy
+              ? 'Sending...'
+              : 'Verify email to use Watchlist',
           style: AdaptiveButtonStyle.filled,
         ),
       );

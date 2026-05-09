@@ -14,6 +14,12 @@ service cloud.firestore {
       }
     }
 
+    // Public read-only recommendation config (server-maintained)
+    match /app_config/recommendation_rules {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;

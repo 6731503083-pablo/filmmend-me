@@ -37,6 +37,9 @@ class MovieCard extends StatelessWidget {
   /// Callback when the card is tapped
   final VoidCallback onTap;
 
+  /// Optional recommendation explanation shown below metadata
+  final String? recommendationReason;
+
   /// Creates a movie card widget
   const MovieCard({
     super.key,
@@ -46,6 +49,7 @@ class MovieCard extends StatelessWidget {
     required this.runtime,
     required this.genres,
     required this.onTap,
+    this.recommendationReason,
   });
 
   @override
@@ -188,10 +192,10 @@ class MovieCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     // Genres
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: genres.take(3).map((genre) {
+                     Wrap(
+                       spacing: 6,
+                       runSpacing: 6,
+                       children: genres.take(3).map((genre) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -210,9 +214,23 @@ class MovieCard extends StatelessWidget {
                               fontSize: 11,
                             ),
                           ),
-                        );
-                      }).toList(),
-                    ),
+                         );
+                       }).toList(),
+                     ),
+                    if (recommendationReason != null &&
+                        recommendationReason!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        recommendationReason!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
                 ),
               ),

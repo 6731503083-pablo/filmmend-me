@@ -22,6 +22,7 @@ class _RecommendationResultsScreenState
     extends State<RecommendationResultsScreen> {
   late Future<List<MovieModel>> _moviesFuture;
   final _service = TmdbService();
+  List<String> _availableMoods = TmdbService.fallbackMoodGenres.keys.toList();
 
   // Mutable filter state — initialised from widget params
   late String? _activeMood;
@@ -34,6 +35,17 @@ class _RecommendationResultsScreenState
     _activeMood = widget.mood;
     _activeMinMinutes = widget.maxMinutes;
     _load();
+    _loadAvailableMoods();
+  }
+
+  Future<void> _loadAvailableMoods() async {
+    try {
+      final moods = await _service.getAvailableMoods();
+      if (!mounted || moods.isEmpty) return;
+      setState(() => _availableMoods = moods);
+    } catch (_) {
+      // Keep fallback moods when backend config is unavailable.
+    }
   }
 
   void _load() {
@@ -167,7 +179,7 @@ class _RecommendationResultsScreenState
                   );
                 }
                 if (snapshot.hasError) {
-                  return _buildError(snapshot.error.toString());
+                  return _buildError(snapshot.error!);
                 }
                 final movies = snapshot.data ?? [];
                 if (movies.isEmpty) return _buildEmpty();
@@ -182,6 +194,7 @@ class _RecommendationResultsScreenState
                       rating: movie.voteAverage,
                       runtime: movie.runtimeFormatted,
                       genres: movie.genres.take(3).toList(),
+                      recommendationReason: movie.recommendationReason,
                       onTap: () {
                         context.push('/${RouteNames.movieDetail}/${movie.id}');
                       },
@@ -279,7 +292,7 @@ class _RecommendationResultsScreenState
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: TmdbService.moodGenres.keys.map((mood) {
+                    children: _availableMoods.map((mood) {
                       final isSelected = sheetMood == mood;
                       return GestureDetector(
                         onTap: () => setSheetState(
@@ -463,7 +476,14 @@ class _RecommendationResultsScreenState
     return match['label'] ?? code;
   }
 
-  Widget _buildError(String error) {
+  Widget _buildError(Object error) {
+    final message = error is TmdbException
+        ? error.message
+        : 'Could not load recommendations. Please try again.';
+    final title = error is TmdbException && error.isNetworkError
+        ? 'You appear to be offline'
+        : 'Couldn\'t load movies';
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -472,8 +492,8 @@ class _RecommendationResultsScreenState
           children: [
             const Icon(Icons.wifi_off_rounded, size: 64, color: Colors.white30),
             const SizedBox(height: 16),
-            const Text(
-              'Couldn\'t load movies',
+            Text(
+              title,
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
@@ -482,7 +502,7 @@ class _RecommendationResultsScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              error,
+              message,
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
