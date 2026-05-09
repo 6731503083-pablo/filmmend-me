@@ -21,7 +21,7 @@ User? safeCurrentUser() {
 Stream<User?> safeAuthStateChanges() {
   if (!isFirebaseReady) return Stream<User?>.value(null);
   try {
-    return FirebaseAuth.instance.authStateChanges();
+    return FirebaseAuth.instance.userChanges();
   } catch (_) {
     return Stream<User?>.value(null);
   }

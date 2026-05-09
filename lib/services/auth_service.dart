@@ -61,6 +61,14 @@ class AuthService {
     await _auth.currentUser?.sendEmailVerification();
   }
 
+  /// Reload current user to refresh emailVerified and profile fields
+  Future<User?> reloadCurrentUser() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    await user.reload();
+    return _auth.currentUser;
+  }
+
   /// Sign out
   Future<void> signOut() async {
     await _auth.signOut();

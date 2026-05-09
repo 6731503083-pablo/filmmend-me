@@ -20,6 +20,7 @@ class VerificationRequiredView extends StatefulWidget {
 
 class _VerificationRequiredViewState extends State<VerificationRequiredView> {
   bool _sending = false;
+  bool _checking = false;
 
   Future<void> _resendVerification() async {
     if (_sending) return;
@@ -27,9 +28,9 @@ class _VerificationRequiredViewState extends State<VerificationRequiredView> {
     try {
       await AuthService().resendVerificationEmail();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification email sent.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Verification email sent.')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,6 +40,35 @@ class _VerificationRequiredViewState extends State<VerificationRequiredView> {
       );
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _checkVerification() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    try {
+      final user = await AuthService().reloadCurrentUser();
+      if (!mounted) return;
+      if (user != null && user.emailVerified) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email verified. You are all set.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email not verified yet. Please check your inbox.'),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not refresh verification status. Try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _checking = false);
     }
   }
 
@@ -72,13 +102,23 @@ class _VerificationRequiredViewState extends State<VerificationRequiredView> {
             const SizedBox(height: 8),
             Text(
               widget.subtitle,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 16,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             GradientButton(
               text: _sending ? 'Sending...' : 'Resend Verification Email',
               onPressed: _sending ? null : _resendVerification,
+            ),
+            TextButton(
+              onPressed: _checking ? null : _checkVerification,
+              child: Text(
+                _checking ? 'Checking...' : 'I have verified my email',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
             ),
           ],
         ),

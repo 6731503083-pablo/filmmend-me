@@ -8,6 +8,14 @@ import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/tmdb_service.dart';
+
+class _MoodConfig {
+  final IconData icon;
+  final List<Color> gradient;
+
+  const _MoodConfig({required this.icon, required this.gradient});
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,69 +28,112 @@ class _HomeScreenState extends State<HomeScreen> {
   String? selectedMood;
   double availableTime = 90;
   bool _bannerDismissed = false;
+  final TmdbService _service = TmdbService();
+  List<String> _availableMoods = _defaultMoodOrder;
 
-  static const List<Map<String, dynamic>> _moods = [
-    {
-      'label': 'Chill',
-      'icon': Icons.air,
-      'gradient': [Color(0xFF667eea), Color(0xFF764ba2)],
-    },
-    {
-      'label': 'Happy',
-      'icon': Icons.sentiment_satisfied_alt,
-      'gradient': [Color(0xFFf093fb), Color(0xFFF5576C)],
-    },
-    {
-      'label': 'Romantic',
-      'icon': Icons.favorite,
-      'gradient': [Color(0xFFff9a9e), Color(0xFFfad0c4)],
-    },
-    {
-      'label': 'Nostalgic',
-      'icon': Icons.history_edu,
-      'gradient': [Color(0xFF8E7AB5), Color(0xFFB784B7)],
-    },
-    {
-      'label': 'Sad',
-      'icon': Icons.sentiment_dissatisfied,
-      'gradient': [Color(0xFF4facfe), Color(0xFF00f2fe)],
-    },
-    {
-      'label': 'Tired',
-      'icon': Icons.bedtime,
-      'gradient': [Color(0xFFa18cd1), Color(0xFFfbc2eb)],
-    },
-    {
-      'label': 'Thoughtful',
-      'icon': Icons.psychology,
-      'gradient': [Color(0xFF4A90E2), Color(0xFF357ABD)],
-    },
-    {
-      'label': 'Curious',
-      'icon': Icons.visibility,
-      'gradient': [Color(0xFF2193b0), Color(0xFF6dd5ed)],
-    },
-    {
-      'label': 'Excited',
-      'icon': Icons.celebration,
-      'gradient': [Color(0xFFfa709a), Color(0xFFfee140)],
-    },
-    {
-      'label': 'Adventurous',
-      'icon': Icons.explore,
-      'gradient': [Color(0xFF11998E), Color(0xFF38EF7D)],
-    },
-    {
-      'label': 'Spooky',
-      'icon': Icons.nightlight_round,
-      'gradient': [Color(0xFF434343), Color(0xFF000000)],
-    },
-    {
-      'label': 'Inspired',
-      'icon': Icons.emoji_objects,
-      'gradient': [Color(0xFFFFB75E), Color(0xFFED8F03)],
-    },
+  static const List<String> _defaultMoodOrder = [
+    'Chill',
+    'Happy',
+    'Romantic',
+    'Nostalgic',
+    'Sad',
+    'Tired',
+    'Thoughtful',
+    'Curious',
+    'Excited',
+    'Adventurous',
+    'Spooky',
+    'Inspired',
   ];
+
+  static const _MoodConfig _fallbackMoodConfig = _MoodConfig(
+    icon: Icons.movie,
+    gradient: [Color(0xFF2AFADF), Color(0xFF4C83FF)],
+  );
+
+  static const Map<String, _MoodConfig> _moodConfigs = {
+    'Chill': _MoodConfig(
+      icon: Icons.air,
+      gradient: [Color(0xFF667eea), Color(0xFF764ba2)],
+    ),
+    'Happy': _MoodConfig(
+      icon: Icons.sentiment_satisfied_alt,
+      gradient: [Color(0xFFf093fb), Color(0xFFF5576C)],
+    ),
+    'Romantic': _MoodConfig(
+      icon: Icons.favorite,
+      gradient: [Color(0xFFff9a9e), Color(0xFFfad0c4)],
+    ),
+    'Nostalgic': _MoodConfig(
+      icon: Icons.history_edu,
+      gradient: [Color(0xFF8E7AB5), Color(0xFFB784B7)],
+    ),
+    'Sad': _MoodConfig(
+      icon: Icons.sentiment_dissatisfied,
+      gradient: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+    ),
+    'Tired': _MoodConfig(
+      icon: Icons.bedtime,
+      gradient: [Color(0xFFa18cd1), Color(0xFFfbc2eb)],
+    ),
+    'Thoughtful': _MoodConfig(
+      icon: Icons.psychology,
+      gradient: [Color(0xFF4A90E2), Color(0xFF357ABD)],
+    ),
+    'Curious': _MoodConfig(
+      icon: Icons.visibility,
+      gradient: [Color(0xFF2193b0), Color(0xFF6dd5ed)],
+    ),
+    'Excited': _MoodConfig(
+      icon: Icons.celebration,
+      gradient: [Color(0xFFfa709a), Color(0xFFfee140)],
+    ),
+    'Adventurous': _MoodConfig(
+      icon: Icons.explore,
+      gradient: [Color(0xFF11998E), Color(0xFF38EF7D)],
+    ),
+    'Spooky': _MoodConfig(
+      icon: Icons.nightlight_round,
+      gradient: [Color(0xFF434343), Color(0xFF000000)],
+    ),
+    'Inspired': _MoodConfig(
+      icon: Icons.emoji_objects,
+      gradient: [Color(0xFFFFB75E), Color(0xFFED8F03)],
+    ),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvailableMoods();
+  }
+
+  Future<void> _loadAvailableMoods() async {
+    try {
+      final moods = await _service.getAvailableMoods();
+      if (!mounted || moods.isEmpty) return;
+      setState(() {
+        _availableMoods = _normalizeMoodList(moods);
+        if (selectedMood != null && !_availableMoods.contains(selectedMood)) {
+          selectedMood = null;
+        }
+      });
+    } catch (_) {
+      // Keep fallback moods on failure.
+    }
+  }
+
+  List<String> _normalizeMoodList(List<String> moods) {
+    final normalized = <String>[];
+    for (final mood in _defaultMoodOrder) {
+      if (moods.contains(mood)) {
+        normalized.add(mood);
+      }
+    }
+    final extras = moods.where((m) => !normalized.contains(m)).toList()..sort();
+    normalized.addAll(extras);
+    return normalized.isEmpty ? _defaultMoodOrder : normalized;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,54 +182,89 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVerificationBanner() {
-    final User? user = safeCurrentUser();
-    if (_bannerDismissed || user == null || user.emailVerified) {
-      return const SizedBox.shrink();
-    }
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.warning_amber_rounded,
-            color: Colors.amber,
-            size: 20,
+    return StreamBuilder<User?>(
+      stream: safeAuthStateChanges(),
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        if (_bannerDismissed || user == null || user.emailVerified) {
+          return const SizedBox.shrink();
+        }
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
           ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              'Please verify your email address.',
-              style: TextStyle(color: Colors.amber, fontSize: 13),
-            ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.amber,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Please verify your email address.',
+                  style: TextStyle(color: Colors.amber, fontSize: 13),
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  try {
+                    await AuthService().resendVerificationEmail();
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(content: Text('Verification email sent!')),
+                    );
+                  } catch (_) {
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Could not send verification email.'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Resend', style: TextStyle(fontSize: 13)),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  try {
+                    await AuthService().reloadCurrentUser();
+                  } catch (_) {
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Could not refresh verification status.'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Verified', style: TextStyle(fontSize: 13)),
+              ),
+              InkWell(
+                onTap: () => setState(() => _bannerDismissed = true),
+                child: const Icon(Icons.close, color: Colors.amber, size: 18),
+              ),
+            ],
           ),
-          TextButton(
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            onPressed: () async {
-              await AuthService().resendVerificationEmail();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Verification email sent!')),
-                );
-              }
-            },
-            child: const Text('Resend', style: TextStyle(fontSize: 13)),
-          ),
-          InkWell(
-            onTap: () => setState(() => _bannerDismissed = true),
-            child: const Icon(Icons.close, color: Colors.amber, size: 18),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -299,15 +385,15 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisSpacing: isAndroid ? 6 : (isCompact ? 8 : 12),
             childAspectRatio: isAndroid ? 0.9 : (isCompact ? 1.0 : 0.85),
           ),
-          itemCount: _moods.length,
+          itemCount: _availableMoods.length,
           itemBuilder: (context, index) {
-            final mood = _moods[index];
-            final isSelected = selectedMood == mood['label'];
-            final gradientColors = (mood['gradient'] as List).cast<Color>();
+            final moodLabel = _availableMoods[index];
+            final config = _moodConfigs[moodLabel] ?? _fallbackMoodConfig;
+            final isSelected = selectedMood == moodLabel;
+            final gradientColors = config.gradient;
 
             return GestureDetector(
               onTap: () => setState(() {
-                final moodLabel = mood['label'] as String;
                 selectedMood = selectedMood == moodLabel ? null : moodLabel;
               }),
               child: Column(
@@ -345,14 +431,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           : null,
                     ),
                     child: Icon(
-                      mood['icon'] as IconData,
+                      config.icon,
                       color: AppColors.textPrimary,
                       size: isAndroid ? 26 : (isCompact ? 28 : 30),
                     ),
                   ),
                   SizedBox(height: isAndroid ? 3 : (isCompact ? 4 : 6)),
                   Text(
-                    mood['label'] as String,
+                    moodLabel,
                     style: TextStyle(
                       color: isSelected
                           ? AppColors.textPrimary

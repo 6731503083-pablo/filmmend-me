@@ -369,125 +369,38 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   Widget _buildWatchlistButton(BuildContext context) {
-    final User? user = safeCurrentUser();
-    if (user == null) {
-      return SizedBox(
-        width: double.infinity,
-        child: AdaptiveButton(
-          onPressed: _isWatchlistBusy
-              ? null
-              : () async {
-                  if (_movie == null) return;
-                  setState(() => _isWatchlistBusy = true);
-                  try {
-                    await context.push<bool>(RouteNames.login);
-                    if (!mounted || safeCurrentUser() == null) return;
+    return StreamBuilder<User?>(
+      stream: safeAuthStateChanges(),
+      builder: (context, authSnap) {
+        final user = authSnap.data;
+        if (user == null) {
+          return SizedBox(
+            width: double.infinity,
+            child: AdaptiveButton(
+              onPressed: _isWatchlistBusy
+                  ? null
+                  : () async {
+                      if (_movie == null) return;
+                      setState(() => _isWatchlistBusy = true);
+                      try {
+                        await context.push<bool>(RouteNames.login);
+                        if (!mounted || safeCurrentUser() == null) return;
 
-                    final ws = WatchlistService();
-                    final movieId = widget.movieId;
-                    final alreadyInWatchlist = await ws.isInWatchlist(movieId);
-                    if (alreadyInWatchlist) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Already in your watchlist.'),
-                        ),
-                      );
-                      return;
-                    }
+                        final ws = WatchlistService();
+                        final movieId = widget.movieId;
+                        final alreadyInWatchlist = await ws.isInWatchlist(
+                          movieId,
+                        );
+                        if (alreadyInWatchlist) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Already in your watchlist.'),
+                            ),
+                          );
+                          return;
+                        }
 
-                    await ws.addMovie(
-                      movieId: movieId,
-                      title: _movie!.title,
-                      posterPath: _movie!.posterPath,
-                      rating: _movie!.voteAverage,
-                      releaseDate: _movie!.releaseDate,
-                      genres: _movie!.genres,
-                      runtime: _movie!.runtimeFormatted,
-                    );
-
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Added to watchlist.')),
-                    );
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Could not update watchlist. Please try again.',
-                        ),
-                      ),
-                    );
-                  } finally {
-                    if (mounted) {
-                      setState(() => _isWatchlistBusy = false);
-                    }
-                  }
-                },
-          label: 'Sign in to add to Watchlist',
-          style: AdaptiveButtonStyle.filled,
-        ),
-      );
-    }
-    if (!user.emailVerified) {
-      return SizedBox(
-        width: double.infinity,
-        child: AdaptiveButton(
-          onPressed: _isWatchlistBusy
-              ? null
-              : () async {
-                  setState(() => _isWatchlistBusy = true);
-                  try {
-                    await AuthService().resendVerificationEmail();
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Verification email sent.'),
-                      ),
-                    );
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Could not send verification email. Please try again.',
-                        ),
-                      ),
-                    );
-                  } finally {
-                    if (mounted) {
-                      setState(() => _isWatchlistBusy = false);
-                    }
-                  }
-                },
-          label: _isWatchlistBusy
-              ? 'Sending...'
-              : 'Verify email to use Watchlist',
-          style: AdaptiveButtonStyle.filled,
-        ),
-      );
-    }
-
-    final ws = WatchlistService();
-    final movieId = widget.movieId;
-
-    return StreamBuilder<bool>(
-      stream: ws.watchlistStatus(movieId),
-      builder: (context, snap) {
-        final inWatchlist = snap.data ?? false;
-        return SizedBox(
-          width: double.infinity,
-          child: AdaptiveButton(
-            onPressed: _isWatchlistBusy
-                ? null
-                : () async {
-                    if (_movie == null) return;
-                    setState(() => _isWatchlistBusy = true);
-                    try {
-                      if (inWatchlist) {
-                        await ws.removeMovie(movieId);
-                      } else {
                         await ws.addMovie(
                           movieId: movieId,
                           title: _movie!.title,
@@ -497,29 +410,123 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                           genres: _movie!.genres,
                           runtime: _movie!.runtimeFormatted,
                         );
-                      }
-                    } catch (_) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Could not update watchlist. Please try again.',
+
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Added to watchlist.')),
+                        );
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Could not update watchlist. Please try again.',
+                            ),
                           ),
-                        ),
-                      );
-                    } finally {
-                      if (mounted) {
-                        setState(() => _isWatchlistBusy = false);
+                        );
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isWatchlistBusy = false);
+                        }
                       }
-                    }
-                  },
-            label: _isWatchlistBusy
-                ? 'Updating...'
-                : inWatchlist
-                ? 'Remove from Watchlist'
-                : 'Add to Watchlist',
-            style: AdaptiveButtonStyle.filled,
-          ),
+                    },
+              label: 'Sign in to add to Watchlist',
+              style: AdaptiveButtonStyle.filled,
+            ),
+          );
+        }
+        if (!user.emailVerified) {
+          return SizedBox(
+            width: double.infinity,
+            child: AdaptiveButton(
+              onPressed: _isWatchlistBusy
+                  ? null
+                  : () async {
+                      setState(() => _isWatchlistBusy = true);
+                      try {
+                        await AuthService().resendVerificationEmail();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Verification email sent.'),
+                          ),
+                        );
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Could not send verification email. Please try again.',
+                            ),
+                          ),
+                        );
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isWatchlistBusy = false);
+                        }
+                      }
+                    },
+              label: _isWatchlistBusy
+                  ? 'Sending...'
+                  : 'Verify email to use Watchlist',
+              style: AdaptiveButtonStyle.filled,
+            ),
+          );
+        }
+
+        final ws = WatchlistService();
+        final movieId = widget.movieId;
+
+        return StreamBuilder<bool>(
+          stream: ws.watchlistStatus(movieId),
+          builder: (context, snap) {
+            final inWatchlist = snap.data ?? false;
+            return SizedBox(
+              width: double.infinity,
+              child: AdaptiveButton(
+                onPressed: _isWatchlistBusy
+                    ? null
+                    : () async {
+                        if (_movie == null) return;
+                        setState(() => _isWatchlistBusy = true);
+                        try {
+                          if (inWatchlist) {
+                            await ws.removeMovie(movieId);
+                          } else {
+                            await ws.addMovie(
+                              movieId: movieId,
+                              title: _movie!.title,
+                              posterPath: _movie!.posterPath,
+                              rating: _movie!.voteAverage,
+                              releaseDate: _movie!.releaseDate,
+                              genres: _movie!.genres,
+                              runtime: _movie!.runtimeFormatted,
+                            );
+                          }
+                        } catch (_) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Could not update watchlist. Please try again.',
+                              ),
+                            ),
+                          );
+                        } finally {
+                          if (mounted) {
+                            setState(() => _isWatchlistBusy = false);
+                          }
+                        }
+                      },
+                label: _isWatchlistBusy
+                    ? 'Updating...'
+                    : inWatchlist
+                    ? 'Remove from Watchlist'
+                    : 'Add to Watchlist',
+                style: AdaptiveButtonStyle.filled,
+              ),
+            );
+          },
         );
       },
     );

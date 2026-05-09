@@ -3,14 +3,94 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isString(value) {
+      return value is string;
+    }
+
+    function isNullableString(value) {
+      return value == null || value is string;
+    }
+
+    function isNumber(value) {
+      return value is number;
+    }
+
+    function isValidUserCreate(data) {
+      return data.keys().hasOnly(['displayName', 'email', 'createdAt', 'photoUrl']) &&
+        isString(data.displayName) &&
+        isString(data.email) &&
+        data.createdAt is timestamp &&
+        isNullableString(data.photoUrl);
+    }
+
+    function isValidUserUpdate() {
+      return request.resource.data.keys().hasOnly(['displayName', 'email', 'createdAt', 'photoUrl']) &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isString(request.resource.data.displayName) &&
+        isNullableString(request.resource.data.photoUrl);
+    }
+
+    function isValidWatchlistCreate(data) {
+      return data.keys().hasOnly([
+          'movieId',
+          'title',
+          'posterPath',
+          'rating',
+          'releaseDate',
+          'genres',
+          'runtime',
+          'addedAt'
+        ]) &&
+        isString(data.movieId) &&
+        isString(data.title) &&
+        isNullableString(data.posterPath) &&
+        isNumber(data.rating) &&
+        isNullableString(data.releaseDate) &&
+        data.genres is list &&
+        data.genres.size() <= 12 &&
+        isNullableString(data.runtime) &&
+        data.addedAt is timestamp;
+    }
+
+    function isValidWatchlistUpdate() {
+      return request.resource.data.keys().hasOnly([
+          'movieId',
+          'title',
+          'posterPath',
+          'rating',
+          'releaseDate',
+          'genres',
+          'runtime',
+          'addedAt'
+        ]) &&
+        request.resource.data.movieId == resource.data.movieId &&
+        request.resource.data.addedAt == resource.data.addedAt &&
+        isString(request.resource.data.title) &&
+        isNullableString(request.resource.data.posterPath) &&
+        isNumber(request.resource.data.rating) &&
+        isNullableString(request.resource.data.releaseDate) &&
+        request.resource.data.genres is list &&
+        request.resource.data.genres.size() <= 12 &&
+        isNullableString(request.resource.data.runtime);
+    }
+
     // User profile: only the owner can read/write their own document
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read, delete: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserCreate(request.resource.data);
+      allow update: if isOwner(userId) && isValidUserUpdate();
 
       // Watchlist: only the owner can read/write their own watchlist
       match /watchlist/{movieId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidWatchlistCreate(request.resource.data);
+        allow update: if isOwner(userId) && isValidWatchlistUpdate();
+        allow delete: if isOwner(userId);
       }
     }
 
