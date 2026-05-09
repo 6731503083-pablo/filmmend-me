@@ -13,6 +13,7 @@ import '../models/movie_model.dart';
 class TmdbService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
   static const int _targetResultCount = 20;
+  static final http.Client _client = http.Client();
 
   /// CI injects the real token by replacing __TMDB_TOKEN__ via sed.
   /// For local dev/release overrides, use --dart-define=TMDB_READ_TOKEN=...
@@ -160,7 +161,7 @@ class TmdbService {
         _stablePage(context.seed, maxPage: 3, salt: 3),
       ];
 
-      final englishOrLanguageResults = await _fetchDiscoverPages(
+      final englishFuture = _fetchDiscoverPages(
         pages: primaryPages,
         context: context,
         withOriginalLanguage: language ?? 'en',
@@ -169,9 +170,9 @@ class TmdbService {
         voteAverageGte: 6.0,
       );
 
-      final intlResults = language != null
-          ? <MovieModel>[]
-          : await _fetchDiscoverPages(
+      final intlFuture = language != null
+          ? Future.value(<MovieModel>[])
+          : _fetchDiscoverPages(
               pages: intlPages,
               context: context,
               withOriginalLanguage: null,
@@ -179,6 +180,10 @@ class TmdbService {
               voteCountGte: 250,
               voteAverageGte: 6.8,
             );
+
+      final results = await Future.wait([englishFuture, intlFuture]);
+      final englishOrLanguageResults = results[0];
+      final intlResults = results[1];
 
       final fallbackResults =
           (englishOrLanguageResults.length + intlResults.length) <
@@ -213,8 +218,7 @@ class TmdbService {
     required int voteCountGte,
     required double voteAverageGte,
   }) async {
-    final all = <MovieModel>[];
-    for (final page in pages) {
+    final futures = pages.map((page) async {
       final params = <String, String>{
         'sort_by': 'popularity.desc',
         'include_adult': 'false',
@@ -237,12 +241,13 @@ class TmdbService {
       ).replace(queryParameters: params);
       final response = await _getWithRetry(uri);
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final results = (data['results'] as List<dynamic>? ?? const [])
+      return (data['results'] as List<dynamic>? ?? const [])
           .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
           .toList();
-      all.addAll(results);
-    }
-    return all;
+    }).toList();
+
+    final pagesResults = await Future.wait(futures);
+    return pagesResults.expand((results) => results).toList();
   }
 
   Future<List<MovieModel>> _fetchFallbackPopular(
@@ -252,8 +257,7 @@ class TmdbService {
       _stablePage(context.seed, maxPage: 3, salt: 4),
       _stablePage(context.seed, maxPage: 3, salt: 5),
     ];
-    final all = <MovieModel>[];
-    for (final page in pages) {
+    final futures = pages.map((page) async {
       final params = <String, String>{
         'include_adult': 'false',
         'language': 'en-US',
@@ -265,12 +269,13 @@ class TmdbService {
       ).replace(queryParameters: params);
       final response = await _getWithRetry(uri);
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final results = (data['results'] as List<dynamic>? ?? const [])
+      return (data['results'] as List<dynamic>? ?? const [])
           .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
           .toList();
-      all.addAll(results);
-    }
-    return all;
+    }).toList();
+
+    final pagesResults = await Future.wait(futures);
+    return pagesResults.expand((results) => results).toList();
   }
 
   List<MovieModel> _rankMovies(
@@ -432,7 +437,7 @@ class TmdbService {
     int attempt = 0;
     while (true) {
       try {
-        final response = await http
+        final response = await _client
             .get(uri, headers: _headers)
             .timeout(const Duration(seconds: 10));
         _checkStatus(response);
