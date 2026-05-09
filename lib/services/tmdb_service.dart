@@ -137,59 +137,72 @@ class TmdbService {
     int? minMinutes,
     String? language,
   }) async {
-    _ensureTokenConfigured();
+    try {
+      _ensureTokenConfigured();
 
-    final moodRules = await _getMoodRules();
-    final moodGenresForFilter = mood == null ? <int>[] : (moodRules[mood] ?? []);
-    final context = _RecommendationContext(
-      mood: mood,
-      minMinutes: minMinutes,
-      language: language,
-      moodGenreIds: moodGenresForFilter,
-    );
+      final moodRules = await _getMoodRules();
+      final moodGenresForFilter = mood == null
+          ? <int>[]
+          : (moodRules[mood] ?? []);
+      final context = _RecommendationContext(
+        mood: mood,
+        minMinutes: minMinutes,
+        language: language,
+        moodGenreIds: moodGenresForFilter,
+      );
 
-    final primaryPages = [
-      _stablePage(context.seed, maxPage: 5, salt: 0),
-      _stablePage(context.seed, maxPage: 5, salt: 1),
-    ];
-    final intlPages = [
-      _stablePage(context.seed, maxPage: 3, salt: 2),
-      _stablePage(context.seed, maxPage: 3, salt: 3),
-    ];
+      final primaryPages = [
+        _stablePage(context.seed, maxPage: 5, salt: 0),
+        _stablePage(context.seed, maxPage: 5, salt: 1),
+      ];
+      final intlPages = [
+        _stablePage(context.seed, maxPage: 3, salt: 2),
+        _stablePage(context.seed, maxPage: 3, salt: 3),
+      ];
 
-    final englishOrLanguageResults = await _fetchDiscoverPages(
-      pages: primaryPages,
-      context: context,
-      withOriginalLanguage: language ?? 'en',
-      withoutOriginalLanguage: null,
-      voteCountGte: language == null ? 150 : 100,
-      voteAverageGte: 6.0,
-    );
+      final englishOrLanguageResults = await _fetchDiscoverPages(
+        pages: primaryPages,
+        context: context,
+        withOriginalLanguage: language ?? 'en',
+        withoutOriginalLanguage: null,
+        voteCountGte: language == null ? 150 : 100,
+        voteAverageGte: 6.0,
+      );
 
-    final intlResults = language != null
-        ? <MovieModel>[]
-        : await _fetchDiscoverPages(
-            pages: intlPages,
-            context: context,
-            withOriginalLanguage: null,
-            withoutOriginalLanguage: 'en',
-            voteCountGte: 250,
-            voteAverageGte: 6.8,
-          );
+      final intlResults = language != null
+          ? <MovieModel>[]
+          : await _fetchDiscoverPages(
+              pages: intlPages,
+              context: context,
+              withOriginalLanguage: null,
+              withoutOriginalLanguage: 'en',
+              voteCountGte: 250,
+              voteAverageGte: 6.8,
+            );
 
-    final fallbackResults =
-        (englishOrLanguageResults.length + intlResults.length) < _targetResultCount
-            ? await _fetchFallbackPopular(context)
-            : <MovieModel>[];
+      final fallbackResults =
+          (englishOrLanguageResults.length + intlResults.length) <
+              _targetResultCount
+          ? await _fetchFallbackPopular(context)
+          : <MovieModel>[];
 
-    final combined = _dedupeById([
-      ...englishOrLanguageResults,
-      ...intlResults,
-      ...fallbackResults,
-    ]);
+      final combined = _dedupeById([
+        ...englishOrLanguageResults,
+        ...intlResults,
+        ...fallbackResults,
+      ]);
 
-    final ranked = _rankMovies(combined, context);
-    return ranked.take(_targetResultCount).toList();
+      final ranked = _rankMovies(combined, context);
+      return ranked.take(_targetResultCount).toList();
+    } on TmdbException {
+      rethrow;
+    } catch (_) {
+      throw const TmdbException(
+        statusCode: 0,
+        message: 'Could not load recommendations. Please try again shortly.',
+        kind: TmdbFailureKind.client,
+      );
+    }
   }
 
   Future<List<MovieModel>> _fetchDiscoverPages({
@@ -302,10 +315,13 @@ class TmdbService {
     required int nowYear,
     required Set<int> seenGenres,
   }) {
-    final normalizedRating = (movie.voteAverage.clamp(0, 10) as num).toDouble() / 10;
+    final normalizedRating =
+        (movie.voteAverage.clamp(0, 10) / 10).toDouble();
     final votesScore = min(log(movie.voteCount + 1) / log(5000), 1.0);
-    final popularityScore =
-        min(((movie.popularity.clamp(0, 100) as num).toDouble()) / 100, 1.0);
+    final popularityScore = min(
+      (movie.popularity.clamp(0, 100) / 100).toDouble(),
+      1.0,
+    );
 
     final year = movie.releaseYear;
     final yearsOld = year > 0 ? max(0, nowYear - year) : 40;
