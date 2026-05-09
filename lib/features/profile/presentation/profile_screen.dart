@@ -37,6 +37,13 @@ class ProfileScreen extends StatelessWidget {
               ),
             );
           }
+          if (!user.emailVerified) {
+            return const VerificationRequiredView(
+              icon: Icons.mark_email_unread_outlined,
+              subtitle:
+                  'Verify your email to unlock your full profile and account features.',
+            );
+          }
           return FutureBuilder<UserModel?>(
             future: AuthService().getCurrentUserModel(),
             builder: (context, modelSnap) {

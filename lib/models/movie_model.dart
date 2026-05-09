@@ -115,6 +115,7 @@ class MovieModel {
   final List<CrewMember> crew;
   final List<MovieModel> similarMovies;
   final List<MovieVideo> videos;
+  final String? recommendationReason;
 
   const MovieModel({
     required this.id,
@@ -141,6 +142,7 @@ class MovieModel {
     this.crew = const [],
     this.similarMovies = const [],
     this.videos = const [],
+    this.recommendationReason,
   });
 
   // TMDB genre ID → human-readable name map
@@ -244,6 +246,37 @@ class MovieModel {
               ?.map((v) => MovieVideo.fromJson(v as Map<String, dynamic>))
               .toList() ??
           [],
+      recommendationReason: null,
+    );
+  }
+
+  MovieModel withRecommendationReason(String? reason) {
+    return MovieModel(
+      id: id,
+      title: title,
+      originalTitle: originalTitle,
+      overview: overview,
+      posterPath: posterPath,
+      backdropPath: backdropPath,
+      voteAverage: voteAverage,
+      voteCount: voteCount,
+      releaseDate: releaseDate,
+      genreIds: genreIds,
+      genres: genres,
+      runtime: runtime,
+      tagline: tagline,
+      budget: budget,
+      revenue: revenue,
+      status: status,
+      originalLanguage: originalLanguage,
+      popularity: popularity,
+      productionCompanies: productionCompanies,
+      spokenLanguages: spokenLanguages,
+      cast: cast,
+      crew: crew,
+      similarMovies: similarMovies,
+      videos: videos,
+      recommendationReason: reason,
     );
   }
 

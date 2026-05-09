@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,6 +12,7 @@ import '../models/movie_model.dart';
 
 class TmdbService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
+  static const int _targetResultCount = 20;
 
   /// CI injects the real token by replacing __TMDB_TOKEN__ via sed.
   /// For local dev/release overrides, use --dart-define=TMDB_READ_TOKEN=...
@@ -16,6 +21,30 @@ class TmdbService {
     'TMDB_READ_TOKEN',
     defaultValue: '',
   );
+
+  /// Fallback rules used when backend-configured rules are unavailable.
+  static const Map<String, List<int>> fallbackMoodGenres = {
+    'Chill': [10749, 35, 16, 10751],
+    'Happy': [35, 16, 10751, 10402],
+    'Sad': [18, 10402, 10749],
+    'Excited': [28, 12, 878, 53],
+    'Romantic': [10749, 18, 35],
+    'Tired': [16, 10751, 35],
+    'Thoughtful': [18, 36, 9648, 99],
+    'Curious': [99, 9648, 878, 36, 14],
+    'Nostalgic': [18, 10751, 10402, 36],
+    'Adventurous': [12, 14, 878, 28],
+    'Spooky': [27, 53, 9648],
+    'Inspired': [36, 18, 99, 10402],
+  };
+
+  /// Compatibility alias for existing UI usages.
+  static Map<String, List<int>> get moodGenres => fallbackMoodGenres;
+
+  static DateTime? _moodRulesLoadedAt;
+  static Map<String, List<int>>? _cachedMoodRules;
+  static const Duration _moodRulesCacheDuration = Duration(minutes: 20);
+
   static String get _dotenvToken {
     if (!dotenv.isInitialized) return '';
     return dotenv.env['TMDB_READ_TOKEN']?.trim() ?? '';
@@ -40,115 +69,301 @@ class TmdbService {
         statusCode: 0,
         message:
             'Movie service is not configured. Please contact support or try again later.',
+        kind: TmdbFailureKind.configuration,
       );
     }
   }
 
-  // ── Mood → Genre IDs ────────────────────────────────────────────────────────
-  // TMDB genre IDs reference:
-  //   28 Action | 12 Adventure | 16 Animation | 35 Comedy | 80 Crime
-  //   99 Documentary | 18 Drama | 10751 Family | 14 Fantasy | 36 History
-  //   27 Horror | 10402 Music | 9648 Mystery | 10749 Romance | 878 Sci-Fi
-  //   10770 TV Movie | 53 Thriller | 10752 War | 37 Western
-  //
-  // These are joined with '|' (OR) so a movie only needs to match ONE genre.
-  static const Map<String, List<int>> moodGenres = {
-    // Relaxing — light romance, soft comedy, easy drama, animation
-    'Chill': [10749, 35, 16, 10751],
-    // Feel-good — comedy, animation, family, music
-    'Happy': [35, 16, 10751, 10402],
-    // Emotional — drama, music, romance (tearjerkers)
-    'Sad': [18, 10402, 10749],
-    // High-energy — action, adventure, sci-fi, thriller
-    'Excited': [28, 12, 878, 53],
-    // Love stories — romance first, drama, comedy
-    'Romantic': [10749, 18, 35],
-    // Low-effort watching — animation, family, comedy
-    'Tired': [16, 10751, 35],
-    // Cerebral — drama, history, mystery, documentary
-    'Thoughtful': [18, 36, 9648, 99],
-    // Exploratory — documentary, mystery, sci-fi, history, fantasy
-    'Curious': [99, 9648, 878, 36, 14],
-    // Reflective comfort — drama, family stories, music, history
-    'Nostalgic': [18, 10751, 10402, 36],
-    // Journey and discovery — adventure first, then fantasy/sci-fi/action
-    'Adventurous': [12, 14, 878, 28],
-    // Dark and tense — horror, thriller, mystery
-    'Spooky': [27, 53, 9648],
-    // Uplifting and motivating — history/biography tone, drama, documentary, music
-    'Inspired': [36, 18, 99, 10402],
-  };
+  Future<List<String>> getAvailableMoods() async {
+    final rules = await _getMoodRules();
+    return rules.keys.toList();
+  }
 
-  // ── Public API ───────────────────────────────────────────────────────────────
+  Future<Map<String, List<int>>> _getMoodRules() async {
+    if (_cachedMoodRules != null &&
+        _moodRulesLoadedAt != null &&
+        DateTime.now().difference(_moodRulesLoadedAt!) < _moodRulesCacheDuration) {
+      return _cachedMoodRules!;
+    }
+
+    if (!_firebaseReady) {
+      return fallbackMoodGenres;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('app_config')
+          .doc('recommendation_rules')
+          .get();
+      final dynamic rawRules = doc.data()?['moodGenres'];
+      final parsedRules = _parseMoodRules(rawRules);
+      if (parsedRules.isNotEmpty) {
+        _cachedMoodRules = parsedRules;
+        _moodRulesLoadedAt = DateTime.now();
+        return parsedRules;
+      }
+    } catch (_) {
+      // Fall back to defaults when backend rules are missing/unavailable.
+    }
+
+    _cachedMoodRules = fallbackMoodGenres;
+    _moodRulesLoadedAt = DateTime.now();
+    return fallbackMoodGenres;
+  }
+
+  Map<String, List<int>> _parseMoodRules(dynamic raw) {
+    if (raw is! Map) return <String, List<int>>{};
+    final parsed = <String, List<int>>{};
+    for (final entry in raw.entries) {
+      final key = entry.key?.toString();
+      final value = entry.value;
+      if (key == null || key.trim().isEmpty || value is! List) continue;
+      final genreIds = value
+          .whereType<num>()
+          .map((e) => e.toInt())
+          .where((id) => id > 0)
+          .toList();
+      if (genreIds.isNotEmpty) {
+        parsed[key.trim()] = genreIds;
+      }
+    }
+    return parsed;
+  }
 
   /// Discover movies filtered by mood (→ genres) and a minimum runtime.
-  /// Prioritises English movies; fills remaining slots with highly-rated
-  /// non-English titles.  Each call picks a random page so results differ
-  /// even for the same mood/runtime combination.
+  /// Uses deterministic pagination, ranking and explainability.
   Future<List<MovieModel>> discoverMovies({
     String? mood,
     int? minMinutes,
     String? language,
   }) async {
     _ensureTokenConfigured();
-    final genres = mood == null ? '' : (moodGenres[mood] ?? []).join('|');
-    final rng = Random();
 
-    // -- 1. English movies (random page 1-5) --
-    final enPage = rng.nextInt(5) + 1;
-    final enParams = <String, String>{
-      'sort_by': 'vote_average.desc',
-      'vote_count.gte': '200',
-      'vote_average.gte': '6.0',
-      'with_original_language': language ?? 'en',
-      'page': '$enPage',
-      if (genres.isNotEmpty) 'with_genres': genres,
-      if (minMinutes != null && minMinutes > 0)
-        'with_runtime.gte': '$minMinutes',
-    };
-    final enUri = Uri.parse(
-      '$_baseUrl/discover/movie',
-    ).replace(queryParameters: enParams);
-    final enResponse = await http.get(enUri, headers: _headers);
-    _checkStatus(enResponse);
-    final enData = jsonDecode(enResponse.body) as Map<String, dynamic>;
-    final enResults = (enData['results'] as List<dynamic>)
-        .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final moodRules = await _getMoodRules();
+    final moodGenresForFilter = mood == null ? <int>[] : (moodRules[mood] ?? []);
+    final context = _RecommendationContext(
+      mood: mood,
+      minMinutes: minMinutes,
+      language: language,
+      moodGenreIds: moodGenresForFilter,
+    );
 
-    // If a specific language filter was applied, return those results directly.
-    if (language != null) {
-      enResults.shuffle(rng);
-      return enResults;
+    final primaryPages = [
+      _stablePage(context.seed, maxPage: 5, salt: 0),
+      _stablePage(context.seed, maxPage: 5, salt: 1),
+    ];
+    final intlPages = [
+      _stablePage(context.seed, maxPage: 3, salt: 2),
+      _stablePage(context.seed, maxPage: 3, salt: 3),
+    ];
+
+    final englishOrLanguageResults = await _fetchDiscoverPages(
+      pages: primaryPages,
+      context: context,
+      withOriginalLanguage: language ?? 'en',
+      withoutOriginalLanguage: null,
+      voteCountGte: language == null ? 150 : 100,
+      voteAverageGte: 6.0,
+    );
+
+    final intlResults = language != null
+        ? <MovieModel>[]
+        : await _fetchDiscoverPages(
+            pages: intlPages,
+            context: context,
+            withOriginalLanguage: null,
+            withoutOriginalLanguage: 'en',
+            voteCountGte: 250,
+            voteAverageGte: 6.8,
+          );
+
+    final fallbackResults =
+        (englishOrLanguageResults.length + intlResults.length) < _targetResultCount
+            ? await _fetchFallbackPopular(context)
+            : <MovieModel>[];
+
+    final combined = _dedupeById([
+      ...englishOrLanguageResults,
+      ...intlResults,
+      ...fallbackResults,
+    ]);
+
+    final ranked = _rankMovies(combined, context);
+    return ranked.take(_targetResultCount).toList();
+  }
+
+  Future<List<MovieModel>> _fetchDiscoverPages({
+    required List<int> pages,
+    required _RecommendationContext context,
+    required String? withOriginalLanguage,
+    required String? withoutOriginalLanguage,
+    required int voteCountGte,
+    required double voteAverageGte,
+  }) async {
+    final all = <MovieModel>[];
+    for (final page in pages) {
+      final params = <String, String>{
+        'sort_by': 'popularity.desc',
+        'include_adult': 'false',
+        'include_video': 'false',
+        'vote_count.gte': '$voteCountGte',
+        'vote_average.gte': voteAverageGte.toStringAsFixed(1),
+        'page': '$page',
+        'region': 'US',
+        if (withOriginalLanguage != null)
+          'with_original_language': withOriginalLanguage,
+        if (withoutOriginalLanguage != null)
+          'without_original_language': withoutOriginalLanguage,
+        if (context.moodGenreIds.isNotEmpty)
+          'with_genres': context.moodGenreIds.join('|'),
+        if (context.minMinutes != null && context.minMinutes! > 0)
+          'with_runtime.gte': '${context.minMinutes}',
+      };
+      final uri = Uri.parse(
+        '$_baseUrl/discover/movie',
+      ).replace(queryParameters: params);
+      final response = await _getWithRetry(uri);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final results = (data['results'] as List<dynamic>? ?? const [])
+          .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      all.addAll(results);
+    }
+    return all;
+  }
+
+  Future<List<MovieModel>> _fetchFallbackPopular(
+    _RecommendationContext context,
+  ) async {
+    final pages = [
+      _stablePage(context.seed, maxPage: 3, salt: 4),
+      _stablePage(context.seed, maxPage: 3, salt: 5),
+    ];
+    final all = <MovieModel>[];
+    for (final page in pages) {
+      final params = <String, String>{
+        'include_adult': 'false',
+        'language': 'en-US',
+        'region': 'US',
+        'page': '$page',
+      };
+      final uri = Uri.parse(
+        '$_baseUrl/movie/popular',
+      ).replace(queryParameters: params);
+      final response = await _getWithRetry(uri);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final results = (data['results'] as List<dynamic>? ?? const [])
+          .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      all.addAll(results);
+    }
+    return all;
+  }
+
+  List<MovieModel> _rankMovies(
+    List<MovieModel> movies,
+    _RecommendationContext context,
+  ) {
+    if (movies.isEmpty) return const <MovieModel>[];
+    final nowYear = DateTime.now().year;
+    final selected = <MovieModel>[];
+    final pool = List<MovieModel>.from(movies);
+    final seenGenres = <int>{};
+
+    while (pool.isNotEmpty && selected.length < _targetResultCount) {
+      pool.sort((a, b) {
+        final scoreA = _scoreMovie(
+          movie: a,
+          context: context,
+          nowYear: nowYear,
+          seenGenres: seenGenres,
+        );
+        final scoreB = _scoreMovie(
+          movie: b,
+          context: context,
+          nowYear: nowYear,
+          seenGenres: seenGenres,
+        );
+        return scoreB.compareTo(scoreA);
+      });
+      final picked = pool.removeAt(0);
+      selected.add(picked);
+      seenGenres.addAll(picked.genreIds);
     }
 
-    // -- 2. High-rated non-English movies (random page 1-3) --
-    final intlPage = rng.nextInt(3) + 1;
-    final intlParams = <String, String>{
-      'sort_by': 'vote_average.desc',
-      'vote_count.gte': '500',
-      'vote_average.gte': '7.5',
-      'without_original_language': 'en',
-      'page': '$intlPage',
-      if (genres.isNotEmpty) 'with_genres': genres,
-      if (minMinutes != null && minMinutes > 0)
-        'with_runtime.gte': '$minMinutes',
-    };
-    final intlUri = Uri.parse(
-      '$_baseUrl/discover/movie',
-    ).replace(queryParameters: intlParams);
-    final intlResponse = await http.get(intlUri, headers: _headers);
-    _checkStatus(intlResponse);
-    final intlData = jsonDecode(intlResponse.body) as Map<String, dynamic>;
-    final intlResults = (intlData['results'] as List<dynamic>)
-        .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
+    return selected
+        .map((movie) => movie.withRecommendationReason(_buildReason(movie, context)))
         .toList();
+  }
 
-    // -- 3. Merge: English first, then sprinkle in international titles --
-    // Keep up to ~15 English + up to ~5 international, then shuffle.
-    final merged = <MovieModel>[...enResults.take(15), ...intlResults.take(5)];
-    merged.shuffle(rng);
-    return merged;
+  double _scoreMovie({
+    required MovieModel movie,
+    required _RecommendationContext context,
+    required int nowYear,
+    required Set<int> seenGenres,
+  }) {
+    final normalizedRating = (movie.voteAverage.clamp(0, 10) as num).toDouble() / 10;
+    final votesScore = min(log(movie.voteCount + 1) / log(5000), 1.0);
+    final popularityScore =
+        min(((movie.popularity.clamp(0, 100) as num).toDouble()) / 100, 1.0);
+
+    final year = movie.releaseYear;
+    final yearsOld = year > 0 ? max(0, nowYear - year) : 40;
+    final freshnessScore = 1 - min(yearsOld / 40, 1.0);
+
+    final relevantGenres = context.moodGenreIds.toSet();
+    final overlap = relevantGenres.isEmpty
+        ? 0.0
+        : movie.genreIds.where(relevantGenres.contains).length /
+            relevantGenres.length;
+
+    final introducesNewGenre = movie.genreIds.any((id) => !seenGenres.contains(id));
+    final diversityBonus = introducesNewGenre ? 0.08 : 0.0;
+
+    return (normalizedRating * 0.40) +
+        (votesScore * 0.20) +
+        (popularityScore * 0.15) +
+        (freshnessScore * 0.15) +
+        (overlap * 0.10) +
+        diversityBonus;
+  }
+
+  String _buildReason(MovieModel movie, _RecommendationContext context) {
+    final reasons = <String>[];
+    if (context.mood != null) {
+      reasons.add('matches your ${context.mood} mood');
+    }
+    if (context.minMinutes != null && context.minMinutes! > 0) {
+      reasons.add('fits your ${context.minMinutes}m+ duration filter');
+    }
+    if (movie.voteAverage >= 7.2) {
+      reasons.add('has strong viewer ratings');
+    } else if (movie.popularity >= 30) {
+      reasons.add('is trending with viewers');
+    }
+    if (movie.releaseYear >= DateTime.now().year - 6) {
+      reasons.add('is relatively recent');
+    }
+    if (reasons.isEmpty) {
+      return 'Recommended because it is currently popular.';
+    }
+    return 'Recommended because it ${reasons.join(', ')}.';
+  }
+
+  List<MovieModel> _dedupeById(List<MovieModel> movies) {
+    final seen = <int>{};
+    final deduped = <MovieModel>[];
+    for (final movie in movies) {
+      if (seen.add(movie.id)) {
+        deduped.add(movie);
+      }
+    }
+    return deduped;
+  }
+
+  int _stablePage(int seed, {required int maxPage, required int salt}) {
+    final value = (seed + (salt * 31)) % maxPage;
+    return value + 1;
   }
 
   /// Fetch full movie details including runtime, credits, and similar movies.
@@ -158,9 +373,7 @@ class TmdbService {
     final uri = Uri.parse('$_baseUrl/movie/$movieId').replace(
       queryParameters: {'append_to_response': 'credits,similar,videos'},
     );
-    final response = await http.get(uri, headers: _headers);
-    _checkStatus(response);
-
+    final response = await _getWithRetry(uri);
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     return MovieModel.fromJson(data);
   }
@@ -172,9 +385,7 @@ class TmdbService {
       '$_baseUrl/search/movie',
     ).replace(queryParameters: {'query': query, 'page': '$page'});
 
-    final response = await http.get(uri, headers: _headers);
-    _checkStatus(response);
-
+    final response = await _getWithRetry(uri);
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final results = data['results'] as List<dynamic>;
     return results
@@ -187,11 +398,13 @@ class TmdbService {
     _ensureTokenConfigured();
     final uri = Uri.parse(
       '$_baseUrl/movie/popular',
-    ).replace(queryParameters: {'page': '$page'});
+    ).replace(queryParameters: {
+      'page': '$page',
+      'include_adult': 'false',
+      'region': 'US',
+    });
 
-    final response = await http.get(uri, headers: _headers);
-    _checkStatus(response);
-
+    final response = await _getWithRetry(uri);
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final results = data['results'] as List<dynamic>;
     return results
@@ -199,15 +412,83 @@ class TmdbService {
         .toList();
   }
 
-  // ── Private helpers ──────────────────────────────────────────────────────────
+  Future<http.Response> _getWithRetry(Uri uri, {int maxRetries = 2}) async {
+    int attempt = 0;
+    while (true) {
+      try {
+        final response = await http
+            .get(uri, headers: _headers)
+            .timeout(const Duration(seconds: 10));
+        _checkStatus(response);
+        return response;
+      } on TimeoutException {
+        if (attempt >= maxRetries) {
+          throw const TmdbException(
+            statusCode: 0,
+            message: 'Request timed out. Please check your network and try again.',
+            kind: TmdbFailureKind.network,
+          );
+        }
+      } on SocketException {
+        if (attempt >= maxRetries) {
+          throw const TmdbException(
+            statusCode: 0,
+            message:
+                'No internet connection. Please reconnect and try again.',
+            kind: TmdbFailureKind.network,
+          );
+        }
+      } on http.ClientException {
+        if (attempt >= maxRetries) {
+          throw const TmdbException(
+            statusCode: 0,
+            message: 'Network request failed. Please try again.',
+            kind: TmdbFailureKind.network,
+          );
+        }
+      } on TmdbException catch (e) {
+        if (!e.isRetryable || attempt >= maxRetries) rethrow;
+      }
+
+      attempt++;
+      final backoffMs = 300 * attempt;
+      await Future<void>.delayed(Duration(milliseconds: backoffMs));
+    }
+  }
 
   void _checkStatus(http.Response response) {
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+
+    final statusCode = response.statusCode;
+    if (statusCode == 401 || statusCode == 403) {
       throw TmdbException(
-        statusCode: response.statusCode,
-        message: _parseErrorMessage(response.body),
+        statusCode: statusCode,
+        message: 'Movie service authorization failed. Please contact support.',
+        kind: TmdbFailureKind.unauthorized,
       );
     }
+    if (statusCode == 429) {
+      throw TmdbException(
+        statusCode: statusCode,
+        message: 'Too many requests. Please try again shortly.',
+        kind: TmdbFailureKind.rateLimited,
+      );
+    }
+    if (statusCode >= 500) {
+      throw TmdbException(
+        statusCode: statusCode,
+        message: 'Movie service is temporarily unavailable. Please try again.',
+        kind: TmdbFailureKind.server,
+      );
+    }
+
+    throw TmdbException(
+      statusCode: statusCode,
+      message: _parseErrorMessage(response.body),
+      kind: TmdbFailureKind.client,
+    );
   }
 
   String _parseErrorMessage(String body) {
@@ -220,12 +501,61 @@ class TmdbService {
   }
 }
 
+bool get _firebaseReady {
+  try {
+    return Firebase.apps.isNotEmpty;
+  } catch (_) {
+    return false;
+  }
+}
+
+class _RecommendationContext {
+  final String? mood;
+  final int? minMinutes;
+  final String? language;
+  final List<int> moodGenreIds;
+
+  const _RecommendationContext({
+    required this.mood,
+    required this.minMinutes,
+    required this.language,
+    required this.moodGenreIds,
+  });
+
+  int get seed {
+    final dayBucket = DateTime.now().toUtc().millisecondsSinceEpoch ~/
+        const Duration(days: 1).inMilliseconds;
+    final key = '${mood ?? ''}|${minMinutes ?? 0}|${language ?? ''}|$dayBucket';
+    return key.hashCode.abs();
+  }
+}
+
+enum TmdbFailureKind {
+  network,
+  unauthorized,
+  rateLimited,
+  server,
+  client,
+  configuration,
+}
+
 class TmdbException implements Exception {
   final int statusCode;
   final String message;
+  final TmdbFailureKind kind;
 
-  const TmdbException({required this.statusCode, required this.message});
+  const TmdbException({
+    required this.statusCode,
+    required this.message,
+    this.kind = TmdbFailureKind.client,
+  });
+
+  bool get isNetworkError => kind == TmdbFailureKind.network;
+  bool get isRetryable =>
+      kind == TmdbFailureKind.network ||
+      kind == TmdbFailureKind.server ||
+      kind == TmdbFailureKind.rateLimited;
 
   @override
-  String toString() => 'TmdbException($statusCode): $message';
+  String toString() => message;
 }

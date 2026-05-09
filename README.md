@@ -11,6 +11,7 @@ If you are moving development to a new laptop, read this first:
 ## ✨ Features
 
 - **🎭 Mood-Based Recommendations**: Select your mood and get personalized movie suggestions
+- **🧠 Explainable Recommendations**: Recommended items include short “why this was picked” context
 - **📱 Native iOS 26 Design**: Authentic iOS 26 liquid glass bottom navigation and adaptive UI components
 - **🔐 Authentication Flow**: Login/Register screens with form validation
 - **📚 Watchlist Management**: Save and manage your favorite movies
@@ -137,9 +138,30 @@ lib/
 
 ### Authentication State
 
-- Mock authentication system (ready for Firebase integration)
+- Firebase Authentication + Firestore profile/watchlist integration
 - Login required prompts on protected screens
+- Email verification gates for watchlist/profile protected flows
 - Maintains navigation context
+
+### Recommendation Configuration (Backend-Configurable)
+
+Mood-to-genre rules can be configured from Firestore:
+
+- Document path: `app_config/recommendation_rules`
+- Field: `moodGenres` (map of mood -> list of TMDB genre IDs)
+
+Example:
+
+```json
+{
+  "moodGenres": {
+    "Chill": [10749, 35, 16, 10751],
+    "Excited": [28, 12, 878, 53]
+  }
+}
+```
+
+If this config is missing or unavailable, the app safely uses built-in defaults.
 
 ## 🔮 Future Enhancements
 

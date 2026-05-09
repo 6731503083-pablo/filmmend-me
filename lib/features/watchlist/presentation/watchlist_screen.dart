@@ -26,10 +26,18 @@ class WatchlistScreen extends StatelessWidget {
       body: StreamBuilder<User?>(
         stream: safeAuthStateChanges(),
         builder: (context, authSnap) {
-          if (authSnap.data == null) {
+          final user = authSnap.data;
+          if (user == null) {
             return const LoginRequiredView(
               icon: Icons.bookmark_border,
               subtitle: 'Sign in to save and view your favorite movies',
+            );
+          }
+          if (!user.emailVerified) {
+            return const VerificationRequiredView(
+              icon: Icons.mark_email_unread_outlined,
+              subtitle:
+                  'Verify your email to use watchlist features across devices.',
             );
           }
           final ws = WatchlistService();
