@@ -22,13 +22,22 @@ class WatchlistService {
     required List<String> genres,
     required String? runtime,
   }) async {
-    await _watchlistRef.doc(movieId).set({
-      'movieId': movieId,
-      'title': title,
+    final trimmedMovieId = movieId.trim();
+    if (trimmedMovieId.isEmpty) {
+      throw ArgumentError('movieId cannot be empty');
+    }
+    final normalizedGenres = genres
+        .where((g) => g.trim().isNotEmpty)
+        .map((g) => g.trim())
+        .take(12)
+        .toList();
+    await _watchlistRef.doc(trimmedMovieId).set({
+      'movieId': trimmedMovieId,
+      'title': title.trim(),
       'posterPath': posterPath,
-      'rating': rating,
+      'rating': rating.isNaN ? 0.0 : rating,
       'releaseDate': releaseDate,
-      'genres': genres,
+      'genres': normalizedGenres,
       'runtime': runtime,
       'addedAt': FieldValue.serverTimestamp(),
     });
