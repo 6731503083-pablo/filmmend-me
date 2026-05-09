@@ -21,21 +21,20 @@ If you are moving development to a new laptop, read this first:
 
 ## 🛠 Tech Stack
 
-- **Framework**: Flutter 3.41.1 (Dart 3.11.0)
-- **UI Components**: [adaptive_platform_ui](https://pub.dev/packages/adaptive_platform_ui) ^0.1.101
+- **Framework**: Flutter (Dart >= 3.9.2)
+- **UI Components**: [adaptive_platform_ui](https://pub.dev/packages/adaptive_platform_ui) ^0.1.6
 - **Navigation**: GoRouter with StatefulShellRoute for bottom navigation
-- **State Management**: Riverpod (ready for implementation)
-- **Backend**: Firebase (ready for integration)
-- **Movie Data**: TMDB API (ready for integration)
+- **Backend**: Firebase (Auth + Firestore)
+- **Movie Data**: TMDB API
 
 ## 📦 Key Dependencies
 
 ```yaml
-adaptive_platform_ui: ^0.1.101 # Native iOS 26 components
+adaptive_platform_ui: ^0.1.6 # Native iOS 26 components
 go_router: ^14.6.2 # Declarative routing
-flutter_riverpod: ^2.7.1 # State management
-firebase_core: ^3.11.1 # Firebase integration
-firebase_auth: ^5.4.1 # Authentication
+firebase_core: ^4.4.0 # Firebase integration
+firebase_auth: ^6.1.4 # Authentication
+cloud_firestore: ^6.1.2 # Firestore data
 ```
 
 ## 🎨 Adaptive UI Components Used
@@ -77,6 +76,18 @@ cd filmmend-me
 
 ```bash
 flutter pub get
+```
+
+3. Configure TMDB token (required for recommendations):
+
+```bash
+flutter run --dart-define=TMDB_READ_TOKEN=YOUR_TOKEN
+```
+
+For local development, you can also create a `.env` file (not bundled in release builds):
+
+```
+TMDB_READ_TOKEN=YOUR_TOKEN
 ```
 
 3. Run the app:
@@ -165,9 +176,6 @@ If this config is missing or unavailable, the app safely uses built-in defaults.
 
 ## 🔮 Future Enhancements
 
-- [ ] TMDB API integration for real movie data
-- [ ] Firebase authentication implementation
-- [ ] Firestore database for watchlist persistence
 - [ ] Movie search functionality
 - [ ] User reviews and ratings
 - [ ] Social features (share recommendations)
