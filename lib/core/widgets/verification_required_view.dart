@@ -25,15 +25,16 @@ class _VerificationRequiredViewState extends State<VerificationRequiredView> {
   Future<void> _resendVerification() async {
     if (_sending) return;
     setState(() => _sending = true);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await AuthService().resendVerificationEmail();
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Verification email sent.')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Verification email sent.')),
+      );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Could not send verification email. Please try again.'),
         ),
@@ -46,15 +47,16 @@ class _VerificationRequiredViewState extends State<VerificationRequiredView> {
   Future<void> _checkVerification() async {
     if (_checking) return;
     setState(() => _checking = true);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final user = await AuthService().reloadCurrentUser();
       if (!mounted) return;
       if (user != null && user.emailVerified) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('Email verified. You are all set.')),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Email not verified yet. Please check your inbox.'),
           ),
@@ -62,7 +64,7 @@ class _VerificationRequiredViewState extends State<VerificationRequiredView> {
       }
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Could not refresh verification status. Try again.'),
         ),
