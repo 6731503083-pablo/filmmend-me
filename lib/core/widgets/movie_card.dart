@@ -88,6 +88,8 @@ class MovieCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           cacheWidth: 240,
                           cacheHeight: 360,
+                          filterQuality: FilterQuality.low,
+                          gaplessPlayback: true,
                           errorBuilder: (context, error, stackTrace) {
                             return Icon(
                               Icons.movie,
@@ -192,10 +194,10 @@ class MovieCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     // Genres
-                     Wrap(
-                       spacing: 6,
-                       runSpacing: 6,
-                       children: genres.take(3).map((genre) {
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: genres.take(3).map((genre) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -214,9 +216,9 @@ class MovieCard extends StatelessWidget {
                               fontSize: 11,
                             ),
                           ),
-                         );
-                       }).toList(),
-                     ),
+                        );
+                      }).toList(),
+                    ),
                     if (recommendationReason != null &&
                         recommendationReason!.trim().isNotEmpty) ...[
                       const SizedBox(height: 8),
