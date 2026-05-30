@@ -253,7 +253,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            _buildPosterImage(movie),
+            _buildPosterImage(context, movie),
             // Top gradient so icons are always visible on light images
             Container(
               decoration: BoxDecoration(
@@ -288,7 +288,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  Widget _buildPosterImage(MovieModel movie) {
+  Widget _buildPosterImage(BuildContext context, MovieModel movie) {
     final url = movie.backdropUrl.isNotEmpty
         ? movie.backdropUrl
         : movie.posterUrl;
@@ -298,9 +298,15 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         child: const Icon(Icons.movie, size: 120, color: Colors.white30),
       );
     }
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final cacheWidth = (MediaQuery.sizeOf(context).width * devicePixelRatio)
+        .round();
     return Image.network(
       url,
       fit: BoxFit.cover,
+      cacheWidth: cacheWidth,
+      filterQuality: FilterQuality.low,
+      gaplessPlayback: true,
       errorBuilder: (_, __, ___) => Container(
         color: AppColors.surface,
         child: const Icon(Icons.movie, size: 120, color: Colors.white30),
