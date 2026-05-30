@@ -15,6 +15,16 @@ class TmdbService {
   static const int _targetResultCount = 20;
   static final http.Client _client = http.Client();
 
+  static const Duration _listCacheTtl = Duration(minutes: 10);
+  static const Duration _detailCacheTtl = Duration(minutes: 30);
+  static const Duration _searchCacheTtl = Duration(minutes: 5);
+  static const Duration _popularCacheTtl = Duration(minutes: 5);
+
+  static final Map<String, _CacheEntry<List<MovieModel>>> _listCache = {};
+  static final Map<String, _CacheEntry<MovieModel>> _detailCache = {};
+  static final Map<String, Future<List<MovieModel>>> _listInFlight = {};
+  static final Map<String, Future<MovieModel>> _detailInFlight = {};
+
   /// CI injects the real token by replacing __TMDB_TOKEN__ via sed.
   /// For local dev/release overrides, use --dart-define=TMDB_READ_TOKEN=...
   static const String _ciToken = '__TMDB_TOKEN__';
@@ -83,7 +93,8 @@ class TmdbService {
   Future<Map<String, List<int>>> _getMoodRules() async {
     if (_cachedMoodRules != null &&
         _moodRulesLoadedAt != null &&
-        DateTime.now().difference(_moodRulesLoadedAt!) < _moodRulesCacheDuration) {
+        DateTime.now().difference(_moodRulesLoadedAt!) <
+            _moodRulesCacheDuration) {
       return _cachedMoodRules!;
     }
 
@@ -138,76 +149,86 @@ class TmdbService {
     int? minMinutes,
     String? language,
   }) async {
-    try {
-      _ensureTokenConfigured();
+    final cacheKey = _buildDiscoverCacheKey(
+      mood: mood,
+      minMinutes: minMinutes,
+      language: language,
+    );
+    final cached = _getCachedList(cacheKey);
+    if (cached != null) return cached;
 
-      final moodRules = await _getMoodRules();
-      final moodGenresForFilter = mood == null
-          ? <int>[]
-          : (moodRules[mood] ?? []);
-      final context = _RecommendationContext(
-        mood: mood,
-        minMinutes: minMinutes,
-        language: language,
-        moodGenreIds: moodGenresForFilter,
-      );
+    return _getOrFetchList(cacheKey, _listCacheTtl, () async {
+      try {
+        _ensureTokenConfigured();
 
-      final primaryPages = [
-        _stablePage(context.seed, maxPage: 5, salt: 0),
-        _stablePage(context.seed, maxPage: 5, salt: 1),
-      ];
-      final intlPages = [
-        _stablePage(context.seed, maxPage: 3, salt: 2),
-        _stablePage(context.seed, maxPage: 3, salt: 3),
-      ];
+        final moodRules = await _getMoodRules();
+        final moodGenresForFilter = mood == null
+            ? <int>[]
+            : (moodRules[mood] ?? []);
+        final context = _RecommendationContext(
+          mood: mood,
+          minMinutes: minMinutes,
+          language: language,
+          moodGenreIds: moodGenresForFilter,
+        );
 
-      final englishFuture = _fetchDiscoverPages(
-        pages: primaryPages,
-        context: context,
-        withOriginalLanguage: language ?? 'en',
-        withoutOriginalLanguage: null,
-        voteCountGte: language == null ? 150 : 100,
-        voteAverageGte: 6.0,
-      );
+        final primaryPages = [
+          _stablePage(context.seed, maxPage: 5, salt: 0),
+          _stablePage(context.seed, maxPage: 5, salt: 1),
+        ];
+        final intlPages = [
+          _stablePage(context.seed, maxPage: 3, salt: 2),
+          _stablePage(context.seed, maxPage: 3, salt: 3),
+        ];
 
-      final intlFuture = language != null
-          ? Future.value(<MovieModel>[])
-          : _fetchDiscoverPages(
-              pages: intlPages,
-              context: context,
-              withOriginalLanguage: null,
-              withoutOriginalLanguage: 'en',
-              voteCountGte: 250,
-              voteAverageGte: 6.8,
-            );
+        final englishFuture = _fetchDiscoverPages(
+          pages: primaryPages,
+          context: context,
+          withOriginalLanguage: language ?? 'en',
+          withoutOriginalLanguage: null,
+          voteCountGte: language == null ? 150 : 100,
+          voteAverageGte: 6.0,
+        );
 
-      final results = await Future.wait([englishFuture, intlFuture]);
-      final englishOrLanguageResults = results[0];
-      final intlResults = results[1];
+        final intlFuture = language != null
+            ? Future.value(<MovieModel>[])
+            : _fetchDiscoverPages(
+                pages: intlPages,
+                context: context,
+                withOriginalLanguage: null,
+                withoutOriginalLanguage: 'en',
+                voteCountGte: 250,
+                voteAverageGte: 6.8,
+              );
 
-      final fallbackResults =
-          (englishOrLanguageResults.length + intlResults.length) <
-              _targetResultCount
-          ? await _fetchFallbackPopular(context)
-          : <MovieModel>[];
+        final results = await Future.wait([englishFuture, intlFuture]);
+        final englishOrLanguageResults = results[0];
+        final intlResults = results[1];
 
-      final combined = _dedupeById([
-        ...englishOrLanguageResults,
-        ...intlResults,
-        ...fallbackResults,
-      ]);
+        final fallbackResults =
+            (englishOrLanguageResults.length + intlResults.length) <
+                _targetResultCount
+            ? await _fetchFallbackPopular(context)
+            : <MovieModel>[];
 
-      final ranked = _rankMovies(combined, context);
-      return ranked.take(_targetResultCount).toList();
-    } on TmdbException {
-      rethrow;
-    } catch (_) {
-      throw const TmdbException(
-        statusCode: 0,
-        message: 'Could not load recommendations. Please try again shortly.',
-        kind: TmdbFailureKind.client,
-      );
-    }
+        final combined = _dedupeById([
+          ...englishOrLanguageResults,
+          ...intlResults,
+          ...fallbackResults,
+        ]);
+
+        final ranked = _rankMovies(combined, context);
+        return ranked.take(_targetResultCount).toList();
+      } on TmdbException {
+        rethrow;
+      } catch (_) {
+        throw const TmdbException(
+          statusCode: 0,
+          message: 'Could not load recommendations. Please try again shortly.',
+          kind: TmdbFailureKind.client,
+        );
+      }
+    });
   }
 
   Future<List<MovieModel>> _fetchDiscoverPages({
@@ -310,7 +331,10 @@ class TmdbService {
     }
 
     return selected
-        .map((movie) => movie.withRecommendationReason(_buildReason(movie, context)))
+        .map(
+          (movie) =>
+              movie.withRecommendationReason(_buildReason(movie, context)),
+        )
         .toList();
   }
 
@@ -320,8 +344,7 @@ class TmdbService {
     required int nowYear,
     required Set<int> seenGenres,
   }) {
-    final normalizedRating =
-        (movie.voteAverage.clamp(0, 10) / 10).toDouble();
+    final normalizedRating = (movie.voteAverage.clamp(0, 10) / 10).toDouble();
     final votesScore = min(log(movie.voteCount + 1) / log(5000), 1.0);
     final popularityScore = min(
       (movie.popularity.clamp(0, 100) / 100).toDouble(),
@@ -336,9 +359,11 @@ class TmdbService {
     final overlap = relevantGenres.isEmpty
         ? 0.0
         : movie.genreIds.where(relevantGenres.contains).length /
-            relevantGenres.length;
+              relevantGenres.length;
 
-    final introducesNewGenre = movie.genreIds.any((id) => !seenGenres.contains(id));
+    final introducesNewGenre = movie.genreIds.any(
+      (id) => !seenGenres.contains(id),
+    );
     final diversityBonus = introducesNewGenre ? 0.08 : 0.0;
 
     return (normalizedRating * 0.40) +
@@ -390,47 +415,68 @@ class TmdbService {
   /// Fetch full movie details including runtime, credits, and similar movies.
   /// Uses `append_to_response` to get everything in a single API call.
   Future<MovieModel> getMovieDetails(int movieId) async {
-    _ensureTokenConfigured();
-    final uri = Uri.parse('$_baseUrl/movie/$movieId').replace(
-      queryParameters: {'append_to_response': 'credits,similar,videos'},
-    );
-    final response = await _getWithRetry(uri);
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return MovieModel.fromJson(data);
+    final cacheKey = 'detail:$movieId';
+    final cached = _getCachedDetail(cacheKey);
+    if (cached != null) return cached;
+
+    return _getOrFetchDetail(cacheKey, _detailCacheTtl, () async {
+      _ensureTokenConfigured();
+      final uri = Uri.parse('$_baseUrl/movie/$movieId').replace(
+        queryParameters: {'append_to_response': 'credits,similar,videos'},
+      );
+      final response = await _getWithRetry(uri);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return MovieModel.fromJson(data);
+    });
   }
 
   /// Search movies by a text query.
   Future<List<MovieModel>> searchMovies(String query, {int page = 1}) async {
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) return const <MovieModel>[];
+
+    final cacheKey = 'search:$normalizedQuery:$page';
+    final cached = _getCachedList(cacheKey);
+    if (cached != null) return cached;
+
     _ensureTokenConfigured();
     final uri = Uri.parse(
       '$_baseUrl/search/movie',
-    ).replace(queryParameters: {'query': query, 'page': '$page'});
+    ).replace(queryParameters: {'query': normalizedQuery, 'page': '$page'});
 
-    final response = await _getWithRetry(uri);
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final results = data['results'] as List<dynamic>;
-    return results
-        .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return _getOrFetchList(cacheKey, _searchCacheTtl, () async {
+      final response = await _getWithRetry(uri);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final results = data['results'] as List<dynamic>;
+      return results
+          .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    });
   }
 
   /// Get popular movies (useful for default/fallback lists).
   Future<List<MovieModel>> getPopularMovies({int page = 1}) async {
-    _ensureTokenConfigured();
-    final uri = Uri.parse(
-      '$_baseUrl/movie/popular',
-    ).replace(queryParameters: {
-      'page': '$page',
-      'include_adult': 'false',
-      'region': 'US',
-    });
+    final cacheKey = 'popular:$page';
+    final cached = _getCachedList(cacheKey);
+    if (cached != null) return cached;
 
-    final response = await _getWithRetry(uri);
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final results = data['results'] as List<dynamic>;
-    return results
-        .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    _ensureTokenConfigured();
+    final uri = Uri.parse('$_baseUrl/movie/popular').replace(
+      queryParameters: {
+        'page': '$page',
+        'include_adult': 'false',
+        'region': 'US',
+      },
+    );
+
+    return _getOrFetchList(cacheKey, _popularCacheTtl, () async {
+      final response = await _getWithRetry(uri);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final results = data['results'] as List<dynamic>;
+      return results
+          .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    });
   }
 
   Future<http.Response> _getWithRetry(Uri uri, {int maxRetries = 2}) async {
@@ -446,7 +492,8 @@ class TmdbService {
         if (attempt >= maxRetries) {
           throw const TmdbException(
             statusCode: 0,
-            message: 'Request timed out. Please check your network and try again.',
+            message:
+                'Request timed out. Please check your network and try again.',
             kind: TmdbFailureKind.network,
           );
         }
@@ -454,8 +501,7 @@ class TmdbService {
         if (attempt >= maxRetries) {
           throw const TmdbException(
             statusCode: 0,
-            message:
-                'No internet connection. Please reconnect and try again.',
+            message: 'No internet connection. Please reconnect and try again.',
             kind: TmdbFailureKind.network,
           );
         }
@@ -520,6 +566,80 @@ class TmdbService {
       return 'Unknown TMDB error';
     }
   }
+
+  List<MovieModel>? _getCachedList(String key) {
+    final entry = _listCache[key];
+    if (entry == null || !entry.isValid) return null;
+    return entry.value;
+  }
+
+  MovieModel? _getCachedDetail(String key) {
+    final entry = _detailCache[key];
+    if (entry == null || !entry.isValid) return null;
+    return entry.value;
+  }
+
+  Future<List<MovieModel>> _getOrFetchList(
+    String key,
+    Duration ttl,
+    Future<List<MovieModel>> Function() loader,
+  ) async {
+    final cached = _getCachedList(key);
+    if (cached != null) return cached;
+    final inflight = _listInFlight[key];
+    if (inflight != null) return inflight;
+
+    final future = loader();
+    _listInFlight[key] = future;
+    try {
+      final value = await future;
+      _listCache[key] = _CacheEntry(value, ttl);
+      return value;
+    } finally {
+      _listInFlight.remove(key);
+    }
+  }
+
+  Future<MovieModel> _getOrFetchDetail(
+    String key,
+    Duration ttl,
+    Future<MovieModel> Function() loader,
+  ) async {
+    final cached = _getCachedDetail(key);
+    if (cached != null) return cached;
+    final inflight = _detailInFlight[key];
+    if (inflight != null) return inflight;
+
+    final future = loader();
+    _detailInFlight[key] = future;
+    try {
+      final value = await future;
+      _detailCache[key] = _CacheEntry(value, ttl);
+      return value;
+    } finally {
+      _detailInFlight.remove(key);
+    }
+  }
+
+  String _buildDiscoverCacheKey({
+    required String? mood,
+    required int? minMinutes,
+    required String? language,
+  }) {
+    final dayBucket =
+        DateTime.now().toUtc().millisecondsSinceEpoch ~/
+        const Duration(days: 1).inMilliseconds;
+    return 'discover:${mood ?? ''}:${minMinutes ?? 0}:${language ?? ''}:$dayBucket';
+  }
+}
+
+class _CacheEntry<T> {
+  final T value;
+  final DateTime expiresAt;
+
+  _CacheEntry(this.value, Duration ttl) : expiresAt = DateTime.now().add(ttl);
+
+  bool get isValid => DateTime.now().isBefore(expiresAt);
 }
 
 bool get _firebaseReady {
@@ -544,7 +664,8 @@ class _RecommendationContext {
   });
 
   int get seed {
-    final dayBucket = DateTime.now().toUtc().millisecondsSinceEpoch ~/
+    final dayBucket =
+        DateTime.now().toUtc().millisecondsSinceEpoch ~/
         const Duration(days: 1).inMilliseconds;
     final key = '${mood ?? ''}|${minMinutes ?? 0}|${language ?? ''}|$dayBucket';
     return key.hashCode.abs();
