@@ -52,41 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: password,
       );
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.mark_email_read_rounded, color: AppColors.primary),
-              SizedBox(width: 10),
-              Text(
-                'Verify Your Email',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
-              ),
-            ],
-          ),
-          content: Text(
-            'We sent a verification link to $email.\nPlease check your inbox.',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Got it'),
-            ),
-          ],
-        ),
-      );
-      if (mounted) context.go(RouteNames.home);
+      context.go(RouteNames.verifyEmail, extra: email);
     } on FirebaseAuthException catch (e) {
       setState(() => _errorMessage = AuthService.friendlyError(e));
     } catch (e) {

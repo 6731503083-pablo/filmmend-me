@@ -219,20 +219,6 @@ class MovieCard extends StatelessWidget {
                         );
                       }).toList(),
                     ),
-                    if (recommendationReason != null &&
-                        recommendationReason!.trim().isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        recommendationReason!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.primary.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
                   ],
                 ),
               ),

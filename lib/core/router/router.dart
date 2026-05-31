@@ -6,6 +6,7 @@ import '../../features/watchlist/presentation/watchlist_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/verify_email_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/recommendations/presentation/recommendation_results_screen.dart';
 import '../../features/movie_detail/presentation/movie_detail_screen.dart';
@@ -37,6 +38,15 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: RouteNames.register,
       builder: (context, state) => const RegisterScreen(),
+    ),
+
+    GoRoute(
+      path: RouteNames.verifyEmail,
+      builder: (context, state) {
+        final email = state.extra as String?;
+        final fallbackEmail = safeCurrentUser()?.email ?? '';
+        return VerifyEmailScreen(email: email ?? fallbackEmail);
+      },
     ),
 
     // Login required screen (outside shell)
