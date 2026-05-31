@@ -285,37 +285,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Row(
             children: [
-              if (kIsWeb)
-                GestureDetector(
-                  onTap: () => context.go(RouteNames.presentation),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: AppColors.primaryGradient,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.slideshow, color: Colors.white, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'Pitch Deck',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               GestureDetector(
                 onTap: () => context.go(
                   '/${RouteNames.recommendations}',

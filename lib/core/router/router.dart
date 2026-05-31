@@ -9,7 +9,6 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/recommendations/presentation/recommendation_results_screen.dart';
 import '../../features/movie_detail/presentation/movie_detail_screen.dart';
-import '../../features/presentation/presentation_screen.dart';
 import 'app_shell.dart';
 import 'route_names.dart';
 import 'login_required_screen.dart';
@@ -24,12 +23,6 @@ final GoRouter appRouter = GoRouter(
   initialLocation: RouteNames.home,
 
   routes: [
-    // Presentation screen (web only slides)
-    GoRoute(
-      path: RouteNames.presentation,
-      builder: (context, state) => const PresentationScreen(),
-    ),
-
     // Splash screen (outside shell)
     GoRoute(
       path: RouteNames.splash,
