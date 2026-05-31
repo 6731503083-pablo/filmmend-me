@@ -74,6 +74,36 @@ class AuthService {
     await _auth.signOut();
   }
 
+  /// Delete account and associated data
+  Future<void> deleteAccountAndData() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'No signed-in user found.',
+      );
+    }
+    final userDoc = _firestore.collection('users').doc(user.uid);
+    await _deleteCollection(userDoc.collection('watchlist'));
+    await userDoc.delete();
+    await user.delete();
+  }
+
+  Future<void> _deleteCollection(
+    CollectionReference<Map<String, dynamic>> collection, {
+    int batchSize = 200,
+  }) async {
+    while (true) {
+      final snapshot = await collection.limit(batchSize).get();
+      if (snapshot.docs.isEmpty) return;
+      final batch = _firestore.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
+  }
+
   /// Send password reset email
   Future<void> sendPasswordReset(String email) async {
     await _auth.sendPasswordResetEmail(email: email.trim());

@@ -37,13 +37,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             );
           }
-          if (!user.emailVerified) {
-            return const VerificationRequiredView(
-              icon: Icons.mark_email_unread_outlined,
-              subtitle:
-                  'Verify your email to unlock your full profile and account features.',
-            );
-          }
           return FutureBuilder<UserModel?>(
             future: AuthService().getCurrentUserModel(),
             builder: (context, modelSnap) {
@@ -89,6 +82,8 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 40),
         _buildLogoutButton(context),
+        const SizedBox(height: 16),
+        _buildDeleteButton(context),
       ],
     );
   }
@@ -132,6 +127,124 @@ class ProfileScreen extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+
+
+  Widget _buildDeleteButton(BuildContext context) {
+    return Container(
+      width: 200,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextButton.icon(
+        onPressed: () => _showDeleteAccountDialog(context),
+        icon: const Icon(Icons.delete_forever, color: Colors.red),
+        label: const Text(
+          'Delete Account',
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool isDeleting = false;
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: AppColors.background,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_forever,
+                    color: Colors.red,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Delete Account?',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'This will permanently delete your account and watchlist data. This action cannot be undone.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: AdaptiveButton(
+                    onPressed: isDeleting
+                        ? null
+                        : () async {
+                            setState(() => isDeleting = true);
+                            final messenger = ScaffoldMessenger.of(context);
+                            try {
+                              await AuthService().deleteAccountAndData();
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop();
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Account deleted.'),
+                                ),
+                              );
+                              context.go(RouteNames.home);
+                            } on FirebaseAuthException catch (e) {
+                              if (!context.mounted) return;
+                              setState(() => isDeleting = false);
+                              final message = e.code == 'requires-recent-login'
+                                  ? 'Please log in again before deleting your account.'
+                                  : 'Could not delete account. Please try again.';
+                              messenger.showSnackBar(
+                                SnackBar(content: Text(message)),
+                              );
+                            } catch (_) {
+                              if (!context.mounted) return;
+                              setState(() => isDeleting = false);
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Could not delete account.'),
+                                ),
+                              );
+                            }
+                          },
+                    label: isDeleting ? 'Deleting...' : 'Delete Account',
+                    style: AdaptiveButtonStyle.filled,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                AdaptiveButton(
+                  onPressed:
+                      isDeleting ? null : () => Navigator.of(context).pop(),
+                  label: 'Cancel',
+                  style: AdaptiveButtonStyle.plain,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

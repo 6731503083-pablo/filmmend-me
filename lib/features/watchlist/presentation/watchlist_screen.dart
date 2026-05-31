@@ -40,13 +40,6 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
               subtitle: 'Sign in to save and view your favorite movies',
             );
           }
-          if (!user.emailVerified) {
-            return const VerificationRequiredView(
-              icon: Icons.mark_email_unread_outlined,
-              subtitle:
-                  'Verify your email to use watchlist features across devices.',
-            );
-          }
           final ws = WatchlistService();
           return StreamBuilder<List<Map<String, dynamic>>>(
             key: ValueKey(_streamNonce),
