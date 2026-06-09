@@ -31,7 +31,7 @@ class _FilmmendMeAppState extends State<FilmmendMeApp> {
     );
 
     final minSplashDuration = Future.delayed(
-      const Duration(milliseconds: 3500),
+      const Duration(milliseconds: 600),
     );
 
     await Future.wait([firebaseInit, minSplashDuration]).timeout(

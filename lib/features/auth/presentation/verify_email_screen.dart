@@ -144,7 +144,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'Verify Your Email',
+                  'Check your inbox',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 24,
@@ -163,7 +163,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 ),
                 const SizedBox(height: 20),
                 GradientButton(
-                  text: _sending ? 'Sending...' : 'Resend Verification Email',
+                  text: _sending ? 'Sending...' : 'Resend verification email',
                   onPressed: _sending ? null : _resendVerification,
                 ),
                 TextButton(
@@ -171,13 +171,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ? null
                       : () => _checkVerification(showFeedback: true),
                   child: Text(
-                    _checking ? 'Checking...' : 'I have verified my email',
+                    _checking ? 'Checking...' : "I've verified",
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'We will auto-check for verification.',
+                  "We will check automatically. Check spam if you don't see it.",
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
