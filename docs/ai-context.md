@@ -43,8 +43,9 @@ flowchart TB
 ## App Bootstrap & Entry
 
 1. **`main.dart`** — Loads optional `.env` (TMDB token), sets a global error widget, runs the app.
-2. **`app.dart`** — Initializes Firebase (with a ~600ms minimum splash so the animation can play), then mounts `MaterialApp.router` with `appRouter`.
+2. **`app.dart`** — Initializes Firebase (with a ~600ms minimum splash so the animation can play), configures Crashlytics, then mounts `MaterialApp.router` with `appRouter`.
 3. **`firebase_options.dart`** — Platform Firebase config (injected in CI for web deploy).
+4. **`core/firebase/crashlytics_bootstrap.dart`** — After Firebase init: `FlutterError.onError` and `PlatformDispatcher.onError` → Firebase Crashlytics (collection disabled in debug).
 
 Startup is defensive: Firebase init can time out or fail, with retry UI instead of a hard crash.
 
@@ -162,6 +163,7 @@ Screen-level checks:
 | **Firebase Auth** | Users |
 | **Cloud Firestore** | Profiles, watchlists, remote recommendation config |
 | **Firebase Hosting** | Web build deploy (GitHub Actions on `main`) |
+| **Firebase Crashlytics** | Production crash reports (Android/iOS; off in debug builds) |
 
 Firestore schema (conceptual):
 
@@ -198,13 +200,14 @@ app_config/recommendation_rules
 - Real Firebase integration (not mocked in code)
 - Platform-aware UI (iOS 26 native nav vs Material fallback)
 - Resilient startup and API error handling
+- Firebase Crashlytics for release crash reporting
 
 **Trade-offs / gaps**
 - No formal state management or dependency injection
 - No repository abstraction — screens call services directly
 - Auth gating is UI-level, not router-level (tabs stay reachable when logged out)
 - No offline persistence beyond in-memory TMDB cache
-- No Android CI (web-only GitHub Actions deploy); no Crashlytics yet
+- No Android CI (web-only GitHub Actions deploy)
 - README still mentions “mocked” auth in places; the implementation is production Firebase
 
 ---

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'core/firebase/crashlytics_bootstrap.dart';
 import 'core/router/router.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
@@ -40,6 +41,8 @@ class _FilmmendMeAppState extends State<FilmmendMeApp> {
         throw TimeoutException('Initialization timed out');
       },
     );
+
+    await configureCrashlytics();
   }
 
   void _retryBootstrap() {
