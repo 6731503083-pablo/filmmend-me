@@ -2,6 +2,8 @@
 
 **FilmMend Me** is a cross-platform **Flutter** app for mood-based movie recommendations, watchlists, and user profiles. It uses a **feature-oriented layout** with a thin **service layer**, but not full clean architecture (no repositories, no DI, no global state library).
 
+**Maintaining this doc:** After implementing fixes, agents update this file to match the codebase and commit alongside code changes. See `.cursor/rules/project.mdc` → *After implementing fixes*.
+
 ---
 
 ## High-Level Overview

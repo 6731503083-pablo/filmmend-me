@@ -1,0 +1,294 @@
+---
+description: FilmMend Me architecture, patterns, and coding standards for AI agents
+alwaysApply: true
+---
+
+# FilmMend Me — Project Rules
+
+Flutter cross-platform app for mood-based movie recommendations, watchlists, and profiles.
+**Mental model:** UI shell over **TMDB** (read-only movie data) + **Firebase** (auth, profiles, watchlists, remote config).
+
+Reference: `docs/ai-context.md` for full architecture summary.
+
+---
+
+## Architecture (do not fight it)
+
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| Presentation | `lib/features/*/presentation/` | Screens only — no `domain/` or `data/` subfolders |
+| Services | `lib/services/` | Firebase + TMDB I/O, business logic for APIs |
+| Models | `lib/models/` | `MovieModel`, `UserModel`, JSON/Firestore parsing |
+| Core | `lib/core/` | Router, theme, shared widgets, Firebase guards |
+
+**Intentionally absent** (do not introduce unless explicitly requested):
+- Provider, Riverpod, Bloc, GetIt, or other DI/state libraries
+- Repository/use-case layers
+- Router-level auth redirects
+
+Screens call services directly: `TmdbService()`, `AuthService()`, `WatchlistService()`.
+
+---
+
+## Folder Structure
+
+```
+lib/
+├── main.dart              # Entry: .env load, error widget, runApp
+├── app.dart               # Firebase bootstrap, MaterialApp.router
+├── firebase_options.dart  # Generated/injected Firebase config
+├── core/
+│   ├── firebase/firebase_safe.dart
+│   ├── router/            # router.dart, app_shell.dart, route_names.dart
+│   ├── theme/             # app_colors, app_theme, app_constants, app_text_styles
+│   └── widgets/           # Shared UI; export via widgets.dart barrel
+├── features/
+│   └── <feature>/presentation/<feature>_screen.dart
+├── models/
+└── services/
+```
+
+### Where to put new code
+
+| Change | Location |
+|--------|----------|
+| New screen | `lib/features/<name>/presentation/<name>_screen.dart` |
+| New route | `lib/core/router/router.dart` + `route_names.dart` |
+| Reusable widget (2+ features) | `lib/core/widgets/` + export in `widgets.dart` |
+| API / Firebase logic | `lib/services/<name>_service.dart` |
+| Data type | `lib/models/<name>_model.dart` |
+| Colors / theme tokens | `lib/core/theme/app_colors.dart` or `app_theme.dart` |
+
+---
+
+## Navigation (GoRouter)
+
+- Single router: `appRouter` in `lib/core/router/router.dart`
+- Route paths: `RouteNames` constants in `route_names.dart` — never hardcode path strings except movie detail URLs
+- **Shell tabs** (`StatefulShellRoute.indexedStack`): Home `/`, Watchlist `/watchlist`, Profile `/profile`
+- **Outside shell** (no bottom nav): login, register, verify-email, splash, movie detail
+- Full-screen pushes use `parentNavigatorKey: _rootNavigatorKey` in router config
+
+### Navigation patterns
+
+```dart
+// Auth flows
+context.push(RouteNames.login);
+context.go(RouteNames.home);
+context.go(RouteNames.verifyEmail, extra: email);
+
+// Nested recommendation results (under home)
+context.go('/${RouteNames.recommendations}', extra: {'mood': mood, 'time': minutes});
+
+// Movie detail (root navigator)
+context.push('/${RouteNames.movieDetail}/${movie.id}');
+
+// After login from modal: pop with result
+context.pop(true);
+```
+
+- Use `context.canPop()` before `pop()`; fall back to `context.go(RouteNames.home)` when no stack
+- **Auth gating is UI-level**, not router redirects: show `LoginRequiredView` or `VerificationRequiredView` inside protected screens
+
+---
+
+## State Management
+
+- **Local UI state:** `StatefulWidget` + `setState` (forms, loading flags, selections)
+- **Firebase auth:** `StreamBuilder` on `safeAuthStateChanges()` from `firebase_safe.dart`
+- **Firestore watchlist:** `StreamBuilder` on `WatchlistService().watchlistStream()`
+- **One-shot async (movie detail):** `FutureBuilder` or `late Future` in `initState`
+- Always check `mounted` before `setState` or `context` use after `await`
+
+---
+
+## Firebase & Auth
+
+### Safe access (required)
+
+Never call `FirebaseAuth.instance` directly in UI without guards. Use:
+
+```dart
+import '../../../core/firebase/firebase_safe.dart';
+
+safeCurrentUser()           // User? — null if Firebase not ready
+safeAuthStateChanges()      // Stream<User?>
+```
+
+### Auth flows
+
+| State | UI component |
+|-------|--------------|
+| Not logged in | `LoginRequiredView` (watchlist, profile) |
+| Logged in, email unverified | `VerificationRequiredView` (watchlist add actions) |
+| Firebase errors | `AuthService.friendlyError(e)` for `FirebaseAuthException` |
+
+### Firestore schema (respect in services + rules)
+
+```
+users/{uid}                    # displayName, email, createdAt, photoUrl
+users/{uid}/watchlist/{movieId}  # movieId, title, posterPath, rating, genres, runtime, addedAt
+app_config/recommendation_rules  # moodGenres map — read-only for clients
+```
+
+Update `firestore.rules` when changing document shapes. Rules enforce field sets and owner-only access.
+
+---
+
+## Services
+
+### AuthService (`lib/services/auth_service.dart`)
+- Email/password sign-in, register, verification, password reset, sign-out, account deletion
+- Creates `users/{uid}` on register; deletes watchlist subcollection on account delete
+
+### WatchlistService (`lib/services/watchlist_service.dart`)
+- Throws if user not logged in
+- Use `watchlistStream()` and `watchlistStatus(movieId)` for real-time UI
+- Trim/normalize strings before writes; cap genres at 12
+
+### TmdbService (`lib/services/tmdb_service.dart`)
+- All TMDB HTTP, caching, retries, and recommendation ranking live here
+- Mood → genre mapping: Firestore `app_config/recommendation_rules` with `fallbackMoodGenres` default
+- Token resolution order: CI-injected token → `--dart-define=TMDB_READ_TOKEN` → `.env`
+- Do **not** duplicate recommendation logic in screens
+- Use `TmdbException` with `TmdbFailureKind` for user-facing errors
+
+---
+
+## UI & Theming
+
+- **Dark theme only** — use `AppColors.*` and `AppTheme.darkTheme`; avoid inline magic colors
+- **Scaffold:** `backgroundColor: AppColors.background`
+- **Loading:** `CircularProgressIndicator(color: AppColors.primary)`
+- **Glass surfaces:** `AppColors.glassFill`, `glassBorder`, `glassHighlight`
+- Import shared widgets via `import '../../../core/widgets/widgets.dart';` (relative from features)
+
+### Platform UI
+
+- **iOS:** `adaptive_platform_ui` for native iOS 26 bottom nav (`AppShell`), buttons, sliders, text fields on key flows
+- **Web / Android:** Material fallbacks in `AppShell` and standard Flutter widgets
+- Check platform with `kIsWeb`, `defaultTargetPlatform` when behavior must diverge
+
+### Screen conventions
+
+- Tab screens: transparent `AppBar`, `automaticallyImplyLeading: false`
+- Auth screens: `MovieMosaicHeader`, `GradientButton`, `AppTextField`
+- Movie lists: `MovieCard` widget; posters via `MovieModel.posterUrl` / `TmdbImageConfig`
+
+---
+
+## Models
+
+- `MovieModel.fromJson` handles both discover (`genre_ids`) and detail (`genres`, `credits`, `similar`, `videos`) responses
+- Use `withRecommendationReason()` to attach explainability text — do not mutate in place
+- `UserModel.fromFirestore` for profile reads
+- Keep TMDB image URL helpers in `TmdbImageConfig`
+
+---
+
+## Error Handling
+
+```dart
+// Auth
+try {
+  await _authService.signIn(...);
+} on FirebaseAuthException catch (e) {
+  setState(() => _errorMessage = AuthService.friendlyError(e));
+} catch (_) {
+  setState(() => _errorMessage = 'Something went wrong. Please try again.');
+} finally {
+  if (mounted) setState(() => _isLoading = false);
+}
+
+// TMDB
+on TmdbException catch (e) {
+  // Show e.message to user; check e.isNetworkError / e.isRetryable if retrying
+}
+```
+
+- Dispose `TextEditingController`s in `dispose()`
+- Wrap risky Firebase reads in try/catch with sensible fallbacks (see `TmdbService._getMoodRules`)
+
+---
+
+## Secrets & Configuration
+
+- **Never commit** `.env`, API tokens, or real `firebase_options.dart` secrets
+- Local dev: `.env` with `TMDB_READ_TOKEN=...` or `--dart-define=TMDB_READ_TOKEN=...`
+- Web CI injects token via `sed` replacing `__TMDB_TOKEN__` in `tmdb_service.dart`
+- `main.dart` loads `.env` optionally (CI/production may inject differently)
+
+---
+
+## Dart Style
+
+- `flutter_lints` via `analysis_options.yaml` — run `flutter analyze` before finishing
+- `const` constructors on widgets where possible
+- Private state classes: `_FooScreenState`
+- Utility/theme classes: private constructor `ClassName._();`
+- Relative imports within `lib/` (match existing files)
+- Minimal comments — only for non-obvious business logic
+- **Minimize diff scope** — match surrounding code; no drive-by refactors
+
+---
+
+## Adding a New Feature (checklist)
+
+1. Create `lib/features/<name>/presentation/<name>_screen.dart`
+2. Add route constant to `RouteNames` and route in `router.dart`
+3. Decide shell vs root navigator (tabs vs full-screen overlay)
+4. If protected: wrap body in `StreamBuilder<User?>` + `LoginRequiredView`
+5. If Firestore writes: extend service, update `firestore.rules`, match existing field shapes
+6. If TMDB data: extend `TmdbService` or `MovieModel`, not raw HTTP in UI
+7. Reuse `AppColors`, `widgets.dart`, and existing loading/error patterns
+
+---
+
+## Anti-Patterns (avoid)
+
+- Adding Provider/Riverpod/Bloc without explicit request
+- Creating `repository/` or `domain/` layers
+- Router `redirect:` for auth (breaks tab UX pattern)
+- Raw `FirebaseAuth.instance` in widgets without `firebase_safe`
+- Hardcoded route strings instead of `RouteNames`
+- TMDB calls or ranking logic in presentation layer
+- New state-management patterns inconsistent with `StreamBuilder` + services
+- Committing secrets or modifying git config
+- Creating markdown/docs files unless requested
+
+---
+
+## After implementing fixes
+
+When the user requests implementation work (not question-only / Ask mode):
+
+1. **Update `docs/ai-context.md`** — keep it aligned with the codebase: behavior changes, build/deploy steps, architecture gaps, new features.
+2. **Commit** when the user asks for fixes or implies the work should be saved — include code changes and the `ai-context.md` update in one commit.
+3. **Commit message** — 1–2 sentences focused on *why*, not a file list.
+4. **Do not commit** secrets (`.env`, keystores, `google-services.json`) or unrelated untracked files unless explicitly requested.
+5. **Ask mode** — no edits or commits; remind the user to switch to Agent mode for implementation.
+
+`docs/ai-context.md` is the living architecture summary; `.cursor/rules/project.mdc` is agent behavior. Update both when process or architecture conventions change.
+
+---
+
+## Deployment Notes
+
+- **Web:** GitHub Actions on `main` → Firebase Hosting (`build/web`)
+- **Mobile:** Standard Flutter iOS/Android; Firebase via platform config files
+- Primary target: **iOS** (native adaptive UI); web/Android use Material fallbacks
+
+---
+
+## Key Dependencies
+
+```
+go_router          # Navigation
+adaptive_platform_ui  # iOS 26 native components
+firebase_core, firebase_auth, cloud_firestore
+http               # TMDB
+flutter_dotenv     # Local TMDB token
+url_launcher, share_plus
+```
+
+Do not add dependencies without clear need and user approval.
