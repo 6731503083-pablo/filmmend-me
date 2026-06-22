@@ -190,6 +190,21 @@ app_config/recommendation_rules
 - **iOS / Android Firebase**: `google-services.json` / `GoogleService-Info.plist` (gitignored; copy from Firebase console or old machine). See `HANDOVER_NEW_MAC.md` for Play signing and version-code rules.
 - **Local dev**: `.env` with `TMDB_READ_TOKEN` or `--dart-define=TMDB_READ_TOKEN=...`
 
+### Cursor / VS Code (Android Gradle)
+
+On macOS, Cursor’s Java extension may show **“The supplied phased action failed with an exception”** on `android/build.gradle.kts` when no JDK is registered with the OS. The Gradle files are fine; the IDE cannot sync without a JDK path.
+
+**Workspace fix** (`.vscode/settings.json`): point the Java language server and Gradle import at Android Studio’s bundled JBR:
+
+```json
+"java.jdt.ls.java.home": "/Applications/Android Studio.app/Contents/jbr/Contents/Home",
+"java.import.gradle.java.home": "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+```
+
+After changing JDK settings: **Command Palette → Java: Clean Java Language Server Workspace → Reload**.
+
+Terminal Gradle (independent of IDE): `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` then `cd android && ./gradlew projects`.
+
 ---
 
 ## Architectural Characteristics
@@ -242,6 +257,17 @@ A full readiness audit was completed on 2026-06-22. The app is **upload-ready** 
 - README still says auth is "mocked" — it is real Firebase; README needs a one-line correction
 - No Android CI pipeline (web-only GitHub Actions)
 - Auth gating is UI-level, not router-level
+
+---
+
+## Recent Dev Environment Fix (2026-06-22)
+
+| File | Change |
+|------|--------|
+| `.vscode/settings.json` | JDK paths for Java/Gradle extension (Android Studio JBR); automatic Gradle build configuration |
+| `docs/ai-context.md` | Documented Cursor Gradle sync / JDK setup (this section) |
+
+No changes to `android/build.gradle.kts` — root Gradle script is standard Flutter boilerplate; red IDE errors were JDK configuration only.
 
 ---
 
