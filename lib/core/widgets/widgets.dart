@@ -6,3 +6,5 @@ export 'verification_required_view.dart';
 export 'app_text_field.dart';
 export 'glass_back_button.dart';
 export 'movie_mosaic_header.dart';
+export 'google_sign_in_button.dart';
+export 'email_verification_tips.dart';

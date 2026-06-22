@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   String? _errorMessage;
 
   @override
@@ -26,6 +27,32 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isGoogleLoading || _isLoading) return;
+
+    setState(() {
+      _isGoogleLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (user == null) return;
+      if (context.canPop()) {
+        context.pop(true);
+      } else {
+        context.go(RouteNames.home);
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => _errorMessage = AuthService.friendlyError(e));
+    } catch (_) {
+      setState(() => _errorMessage = 'Google sign-in failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
   }
 
   Future<void> _handleSignIn() async {
@@ -146,6 +173,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                           ),
+                        GoogleSignInButton(
+                          onPressed: _handleGoogleSignIn,
+                          isLoading: _isGoogleLoading,
+                        ),
+                        const SizedBox(height: 20),
+                        const AuthDivider(),
+                        const SizedBox(height: 20),
                         AuthField(
                           controller: _emailController,
                           hint: 'Email',
@@ -178,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 28),
-                        _isLoading
+                        _isLoading || _isGoogleLoading
                             ? const Center(
                                 child: CircularProgressIndicator(
                                   color: AppColors.primary,

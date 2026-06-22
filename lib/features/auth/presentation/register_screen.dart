@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _authService = AuthService();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   String? _errorMessage;
 
   @override
@@ -28,6 +29,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isGoogleLoading || _isLoading) return;
+
+    setState(() {
+      _isGoogleLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (user == null) return;
+      context.go(RouteNames.home);
+    } on FirebaseAuthException catch (e) {
+      setState(() => _errorMessage = AuthService.friendlyError(e));
+    } catch (_) {
+      setState(() => _errorMessage = 'Google sign-in failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
   }
 
   Future<void> _handleRegister() async {
@@ -149,6 +172,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ],
                             ),
                           ),
+                        GoogleSignInButton(
+                          onPressed: _handleGoogleSignIn,
+                          isLoading: _isGoogleLoading,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'No verification email needed with Google.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const AuthDivider(),
+                        const SizedBox(height: 20),
                         AuthField(
                           controller: _displayNameController,
                           hint: 'Display Name',
@@ -172,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        _isLoading
+                        _isLoading || _isGoogleLoading
                             ? const Center(
                                 child: CircularProgressIndicator(
                                   color: AppColors.primary,

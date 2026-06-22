@@ -92,7 +92,7 @@ This keeps the codebase small but couples screens to services.
 | **home** | Mood picker, runtime slider, navigates to recommendations |
 | **recommendations** | Displays ranked TMDB results with “why picked” text |
 | **movie_detail** | Full movie info, trailer links, watchlist toggle |
-| **auth** | Login, register, email verification |
+| **auth** | Login, register, Google Sign-In, email verification |
 | **watchlist** | Real-time Firestore watchlist |
 | **profile** | User info, stats, logout, account deletion |
 
@@ -103,9 +103,10 @@ Each feature is **presentation-only** — no `domain/` or `data/` subfolders.
 ## Services Layer
 
 ### `AuthService`
-- Firebase Auth (email/password)
-- Firestore user docs at `users/{uid}`
+- Firebase Auth (email/password + **Google Sign-In**)
+- Firestore user docs at `users/{uid}` (created on register or first Google sign-in)
 - Email verification, password reset, account deletion (including watchlist cleanup)
+- Google accounts are treated as verified (`emailVerified == true`) — no verification email
 
 ### `WatchlistService`
 - Subcollection: `users/{uid}/watchlist/{movieId}`
@@ -138,9 +139,26 @@ safeCurrentUser() / safeAuthStateChanges()  ← guards if Firebase not ready
 Screen-level checks:
   - Not logged in → LoginRequiredView
   - Logged in, email unverified → VerificationRequiredView (watchlist actions)
+  - Google Sign-In → skips verification email flow
 ```
 
 `firebase_safe.dart` wraps Firebase calls so uninitialized Firebase does not crash the app.
+
+### Google Sign-In (free, no custom domain)
+
+Login and register screens offer **Continue with Google** (`google_sign_in` + `AuthService.signInWithGoogle()`). Web uses `signInWithPopup`; mobile uses the Google account picker.
+
+**Firebase Console setup (one-time):**
+1. **Authentication → Sign-in method → Google** → Enable
+2. **Android:** add debug + release SHA-1/SHA-256 fingerprints (Project settings → Your apps → Android)
+3. **iOS:** add `CFBundleURLTypes` URL scheme from `REVERSED_CLIENT_ID` in `GoogleService-Info.plist`
+4. **iOS/Web client ID:** pass Web OAuth client ID at run/build when needed:
+   `--dart-define=GOOGLE_WEB_CLIENT_ID=....apps.googleusercontent.com`
+   (from Project settings → Web app → Web client ID; stored in `GoogleAuthConfig`)
+
+### Email verification UX (email/password only)
+
+Verification emails come from `noreply@filmmend-me.firebaseapp.com` and may land in spam without a custom domain. The verify screen and `VerificationRequiredView` show sender address + spam/promotions steps via `EmailVerificationTips`.
 
 ---
 
@@ -150,7 +168,8 @@ Screen-level checks:
 
 **`core/widgets/`** — Reusable pieces:
 - `MovieCard`, `GradientBackground`, `GradientButton`
-- `LoginRequiredView`, `VerificationRequiredView`
+- `LoginRequiredView`, `VerificationRequiredView`, `EmailVerificationTips`
+- `GoogleSignInButton`, `AuthDivider` on login/register
 - Platform-adaptive inputs via `adaptive_platform_ui` on auth/home flows
 
 ---
@@ -160,7 +179,7 @@ Screen-level checks:
 | System | Usage |
 |--------|--------|
 | **TMDB API** | Movie discovery, search, details |
-| **Firebase Auth** | Users |
+| **Firebase Auth** | Users (email/password + Google Sign-In via `google_sign_in`) |
 | **Cloud Firestore** | Profiles, watchlists, remote recommendation config |
 | **Firebase Hosting** | Web build deploy (GitHub Actions on `main`) |
 | **Firebase Crashlytics** | Production crash reports (Android/iOS; off in debug builds) |
@@ -353,3 +372,19 @@ From the roadmap in `README.md`, none of these are started:
 - [ ] Localization
 - [ ] Offline caching (beyond in-memory TMDB cache)
 - [ ] Push notifications for new releases
+
+---
+
+## Google Sign-In + verification UX (2026-06-22)
+
+| File | Change |
+|------|--------|
+| `pubspec.yaml` | Added `google_sign_in` |
+| `lib/services/auth_service.dart` | `signInWithGoogle()`, Firestore user bootstrap for new Google users |
+| `lib/core/firebase/google_auth_config.dart` | Web client ID (`GOOGLE_WEB_CLIENT_ID`), verification sender constant |
+| `lib/core/widgets/google_sign_in_button.dart` | `GoogleSignInButton`, `AuthDivider` |
+| `lib/core/widgets/email_verification_tips.dart` | Spam/promotions guidance + sender address |
+| `lib/features/auth/presentation/login_screen.dart` | Google sign-in button |
+| `lib/features/auth/presentation/register_screen.dart` | Google sign-in (no verification email) |
+| `lib/features/auth/presentation/verify_email_screen.dart` | Prominent spam-folder tips |
+| `lib/core/widgets/verification_required_view.dart` | Same tips on gated screens |

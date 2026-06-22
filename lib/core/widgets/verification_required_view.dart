@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../theme/app_colors.dart';
 import 'gradient_button.dart';
+import 'email_verification_tips.dart';
 
 class VerificationRequiredView extends StatefulWidget {
   final IconData icon;
@@ -110,6 +111,8 @@ class _VerificationRequiredViewState extends State<VerificationRequiredView> {
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 20),
+            const EmailVerificationTips(),
             const SizedBox(height: 20),
             GradientButton(
               text: _sending ? 'Sending...' : 'Resend Verification Email',

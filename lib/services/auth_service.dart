@@ -1,5 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:google_sign_in/google_sign_in.dart';
+
+import '../core/firebase/google_auth_config.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -54,6 +59,73 @@ class AuthService {
       photoUrl: null,
       createdAt: DateTime.now(),
     );
+  }
+
+  /// Sign in with Google. Returns null when the user cancels the picker.
+  /// Google accounts skip email verification.
+  Future<UserModel?> signInWithGoogle() async {
+    if (kIsWeb) {
+      final credential = await _auth.signInWithPopup(GoogleAuthProvider());
+      return _ensureUserDocument(credential.user!);
+    }
+
+    final googleSignIn = _createGoogleSignIn();
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) return null;
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final userCredential = await _auth.signInWithCredential(credential);
+    return _ensureUserDocument(userCredential.user!);
+  }
+
+  GoogleSignIn _createGoogleSignIn() {
+    const scopes = ['email', 'profile'];
+    if (defaultTargetPlatform == TargetPlatform.iOS &&
+        GoogleAuthConfig.webClientId.isNotEmpty) {
+      return GoogleSignIn(
+        clientId: GoogleAuthConfig.webClientId,
+        scopes: scopes,
+      );
+    }
+    return GoogleSignIn(scopes: scopes);
+  }
+
+  Future<UserModel> _ensureUserDocument(User user) async {
+    final userDoc = _firestore.collection('users').doc(user.uid);
+    final snapshot = await userDoc.get();
+
+    if (!snapshot.exists) {
+      final displayName = _googleDisplayName(user);
+      await userDoc.set({
+        'displayName': displayName,
+        'email': user.email?.trim() ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'photoUrl': user.photoURL,
+      });
+      return UserModel(
+        uid: user.uid,
+        email: user.email?.trim() ?? '',
+        displayName: displayName,
+        photoUrl: user.photoURL,
+        createdAt: DateTime.now(),
+      );
+    }
+
+    return UserModel.fromFirestore(snapshot);
+  }
+
+  String _googleDisplayName(User user) {
+    final name = user.displayName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final email = user.email?.trim();
+    if (email != null && email.contains('@')) {
+      return email.split('@').first;
+    }
+    return 'Film Lover';
   }
 
   /// Resend email verification
@@ -151,6 +223,10 @@ class AuthService {
         return 'Invalid email or password. Please try again.';
       case 'network-request-failed':
         return 'Network error. Check your connection.';
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with this email. Try signing in with email instead.';
+      case 'popup-closed-by-user':
+        return 'Sign-in was cancelled.';
       default:
         return e.message ?? 'Something went wrong. Please try again.';
     }

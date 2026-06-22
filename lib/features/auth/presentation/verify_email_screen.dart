@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/email_verification_tips.dart';
 import '../../../services/auth_service.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
@@ -154,13 +155,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'We sent a verification link to $email.\nPlease check your inbox.',
+                  'We sent a verification link to $email.',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 16,
                   ),
                   textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 16),
+                EmailVerificationTips(email: email),
                 const SizedBox(height: 20),
                 GradientButton(
                   text: _sending ? 'Sending...' : 'Resend verification email',
@@ -175,9 +178,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 const Text(
-                  "We will check automatically. Check spam if you don't see it.",
+                  'We check automatically every few seconds.',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
