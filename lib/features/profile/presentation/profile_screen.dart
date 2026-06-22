@@ -213,12 +213,27 @@ class ProfileScreen extends StatelessWidget {
                             } on FirebaseAuthException catch (e) {
                               if (!context.mounted) return;
                               setState(() => isDeleting = false);
-                              final message = e.code == 'requires-recent-login'
-                                  ? 'Please log in again before deleting your account.'
-                                  : 'Could not delete account. Please try again.';
-                              messenger.showSnackBar(
-                                SnackBar(content: Text(message)),
-                              );
+                              if (e.code == 'requires-recent-login') {
+                                Navigator.of(context).pop();
+                                await AuthService().signOut();
+                                if (!context.mounted) return;
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Please log in again to confirm account deletion.',
+                                    ),
+                                  ),
+                                );
+                                context.go(RouteNames.login);
+                              } else {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Could not delete account. Please try again.',
+                                    ),
+                                  ),
+                                );
+                              }
                             } catch (_) {
                               if (!context.mounted) return;
                               setState(() => isDeleting = false);

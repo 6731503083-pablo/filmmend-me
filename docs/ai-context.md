@@ -220,3 +220,39 @@ Think of it as a **Flutter UI shell** over **two backends**:
 2. **Firebase** — identity, user data, watchlists, and remotely tunable mood rules
 
 The app is optimized for **native iOS polish** and a **simple, direct codebase** rather than a layered enterprise architecture.
+
+---
+
+## Play Store Readiness
+
+A full readiness audit was completed on 2026-06-22. The app is **upload-ready** for Android Play Store.
+
+### What was fixed
+
+| # | File | Change |
+|---|------|--------|
+| 1 | `pubspec.yaml` | Updated `description` from Flutter template default to a real description |
+| 2 | `android/app/build.gradle.kts` | Removed stale `TODO` comment about application ID |
+| 3 | `lib/features/profile/presentation/profile_screen.dart` | `requires-recent-login` error now signs the user out and navigates to `/login` instead of showing a dead-end snackbar |
+| 4 | `android/app/build.gradle.kts` | Enabled R8 minification (`isMinifyEnabled`, `isShrinkResources`) for release builds |
+| 5 | `android/app/proguard-rules.pro` | New file — keep rules for Flutter, Firebase, Crashlytics, Kotlin; `SourceFile,LineNumberTable` preserved for readable Crashlytics stack traces |
+
+### Remaining known gaps (not blockers)
+
+- README still says auth is "mocked" — it is real Firebase; README needs a one-line correction
+- No Android CI pipeline (web-only GitHub Actions)
+- Auth gating is UI-level, not router-level
+
+---
+
+## Pending Feature Work
+
+From the roadmap in `README.md`, none of these are started:
+
+- [ ] Movie search
+- [ ] User reviews and ratings
+- [ ] Social sharing of recommendations
+- [ ] Dark / Light theme toggle
+- [ ] Localization
+- [ ] Offline caching (beyond in-memory TMDB cache)
+- [ ] Push notifications for new releases

@@ -1,5 +1,5 @@
 name: filmmend_me
-description: "A new Flutter project."
+description: "Mood-based movie recommendations with watchlist and user profiles."
 publish_to: "none"
 version: 1.0.2+11
 
