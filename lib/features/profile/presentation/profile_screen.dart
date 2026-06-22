@@ -27,6 +27,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       body: StreamBuilder<User?>(
         stream: safeAuthStateChanges(),
+        initialData: safeCurrentUser(),
         builder: (context, snapshot) {
           final user = snapshot.data;
           if (user == null) {

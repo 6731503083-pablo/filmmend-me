@@ -184,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildVerificationBanner() {
     return StreamBuilder<User?>(
       stream: safeAuthStateChanges(),
+      initialData: safeCurrentUser(),
       builder: (context, snapshot) {
         final user = snapshot.data;
         if (_bannerDismissed || user == null || user.emailVerified) {

@@ -32,6 +32,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
       ),
       body: StreamBuilder<User?>(
         stream: safeAuthStateChanges(),
+        initialData: safeCurrentUser(),
         builder: (context, authSnap) {
           final user = authSnap.data;
           if (user == null) {
