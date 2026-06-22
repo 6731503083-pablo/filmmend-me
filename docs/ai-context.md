@@ -363,12 +363,13 @@ No changes to `android/build.gradle.kts` — root Gradle script is standard Flut
 
 ## Emulator Test Pass (2026-06-22)
 
-App run on Pixel 6a (API 34) emulator via `flutter run`. No Flutter exceptions found.
+App run on Pixel 6a (API 34) emulator via `flutter run`. No Flutter exceptions found. All major flows tested and passing.
 
 | # | Finding | Severity | Resolution |
 |---|---------|----------|------------|
 | 1 | `RecommendationResultsScreen.maxMinutes` was misnamed — field and constructor param were called `maxMinutes` but represent a **minimum** runtime filter (used as `with_runtime.gte` in TMDB, labelled "Minimum Duration" in UI) | Bug | **Fixed** — renamed to `minMinutes` in `recommendation_results_screen.dart` and `router.dart` |
-| 2 | Firestore `PERMISSION_DENIED` on `app_config/recommendation_rules` | Infrastructure | Local `firestore.rules` is correct (`allow read: if true`) but rules haven't been deployed to Firebase. App falls back to hardcoded `fallbackMoodGenres` — no user-facing crash. Fix: run `firebase deploy --only firestore:rules` |
+| 2 | `LoginRequiredView` flashed for one frame on Watchlist and Profile tab switch when logged in | Bug | **Fixed** — added `initialData: safeCurrentUser()` to `StreamBuilder<User?>` in `watchlist_screen.dart`, `profile_screen.dart`, and `home_screen.dart` (verification banner). `StreamBuilder` initial build has `snapshot.data == null` before the first stream event, even when the stream emits synchronously; `initialData` bypasses this. |
+| 3 | Firestore `PERMISSION_DENIED` on `app_config/recommendation_rules` | Infrastructure | Local `firestore.rules` is correct (`allow read: if true`) but rules haven't been deployed to Firebase. App falls back to hardcoded `fallbackMoodGenres` — no user-facing crash. Fix: run `firebase deploy --only firestore:rules` |
 
 **Emulator noise (not real bugs):** `GoogleApiManager` / `FlagRegistrar` / `FlagStore` errors are emulator-internal GMS service issues. Frame skipping is expected with software rendering on low RAM.
 
