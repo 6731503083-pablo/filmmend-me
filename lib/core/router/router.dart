@@ -86,7 +86,7 @@ final GoRouter appRouter = GoRouter(
                     final extra = state.extra as Map<String, dynamic>?;
                     return RecommendationResultsScreen(
                       mood: extra?['mood'] as String?,
-                      maxMinutes: extra?['time'] as int?,
+                      minMinutes: extra?['time'] as int?,
                     );
                   },
                 ),

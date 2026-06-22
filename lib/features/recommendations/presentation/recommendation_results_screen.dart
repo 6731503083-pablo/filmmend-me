@@ -8,10 +8,10 @@ import '../../../models/movie_model.dart';
 import '../../../services/tmdb_service.dart';
 
 class RecommendationResultsScreen extends StatefulWidget {
-  const RecommendationResultsScreen({super.key, this.mood, this.maxMinutes});
+  const RecommendationResultsScreen({super.key, this.mood, this.minMinutes});
 
   final String? mood;
-  final int? maxMinutes;
+  final int? minMinutes;
 
   @override
   State<RecommendationResultsScreen> createState() =>
@@ -33,7 +33,7 @@ class _RecommendationResultsScreenState
   void initState() {
     super.initState();
     _activeMood = widget.mood;
-    _activeMinMinutes = widget.maxMinutes;
+    _activeMinMinutes = widget.minMinutes;
     _load();
     _loadAvailableMoods();
   }
