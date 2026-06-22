@@ -105,7 +105,13 @@ class _RecommendationResultsScreenState
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(RouteNames.home);
+            }
+          },
         ),
         actions: [
           // Filter button
@@ -226,7 +232,7 @@ class _RecommendationResultsScreenState
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
-            return Padding(
+            return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 20,
                 16,

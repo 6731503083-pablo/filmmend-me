@@ -389,6 +389,57 @@ From the roadmap in `README.md`, none of these are started:
 
 ---
 
+## Play Store Bug-Fix Pass (2026-06-22)
+
+Comprehensive audit and fix of 28 bugs across the codebase. `flutter analyze` clean after all changes.
+
+### P1 — Crash / Data Loss
+
+| # | File | Fix |
+|---|------|-----|
+| 1 | `lib/core/router/router.dart` | Route `extra` safe-cast: `state.extra as Map<String, dynamic>?` → `extra is Map ? extra : null`; same for `verifyEmail` string extra |
+| 2 | `lib/services/auth_service.dart` | `deleteAccountAndData()`: call `user.delete()` **before** Firestore deletes so a `requires-recent-login` failure does not wipe data from a still-active account |
+| 3 | `lib/app.dart` | Firebase bootstrap retry: guard `Firebase.initializeApp()` with `Firebase.apps.isNotEmpty` check; catch `[core/duplicate-app]` to prevent permanent error screen on slow-network retry |
+
+### P2 — Broken Behavior
+
+| # | File | Fix |
+|---|------|-----|
+| 4 | `lib/features/watchlist/presentation/watchlist_screen.dart` | `Dismissible`: replaced `onDismissed` (fire-and-forget) with `confirmDismiss` that awaits `ws.removeMovie()` and returns `false` on error — prevents item disappearing on failed delete |
+| 5 | `lib/features/auth/presentation/login_screen.dart`, `register_screen.dart` | Added `if (!mounted) return;` to all `catch` blocks; added `if (_isLoading \|\| _isGoogleLoading) return;` double-submit guard to email flows |
+| 6 | `lib/features/profile/presentation/profile_screen.dart` | Delete dialog: capture `GoRouter.of(context)` before `Navigator.pop()` so `requires-recent-login` path correctly signs out and navigates to login; same fix for logout dialog |
+| 7 | `lib/features/recommendations/presentation/recommendation_results_screen.dart`, `lib/features/movie_detail/presentation/movie_detail_screen.dart` | `context.pop()` → `canPop()` guard with `context.go(RouteNames.home)` fallback on all back buttons |
+| 8 | `lib/features/movie_detail/presentation/movie_detail_screen.dart` | Guest login path: check `loggedInUser.emailVerified` after login pop before adding to watchlist |
+| 9 | `android/app/src/main/AndroidManifest.xml` | Added `<queries>` intent for `https` scheme — required for `url_launcher` on Android 11+ |
+| 10 | `android/app/proguard-rules.pro` | Added explicit keep rules for `com.google.android.gms.auth.**`, Firestore, protobuf reflection, and `*Annotation*` |
+| 11 | `pubspec.yaml` | Removed `.env` from `assets:` — prevents TMDB token from being bundled into release APK/AAB; `dotenv.load()` failure is already silently caught in `main.dart` |
+
+### P3 — Logic / Edge Cases
+
+| # | File | Fix |
+|---|------|-----|
+| 12 | `lib/services/tmdb_service.dart` | `searchMovies` / `getPopularMovies`: `data['results'] as List<dynamic>` → `as List<dynamic>? ?? const []`; wrapped in try/catch with `TmdbException` rethrow |
+| 13 | `lib/models/movie_model.dart` | Hardened `fromJson` casts: genre objects use `.whereType<Map>()` + null-safe field reads; `genre_ids` uses `(e as num).toInt()`; same for `productionCompanies` and `spokenLanguages` |
+| 14 | `lib/models/user_model.dart` | `UserModel.fromFirestore`: `doc.data() as Map<String, dynamic>?` with null fallback to default model |
+| 15 | `lib/services/auth_service.dart` | `signOut()`: also calls `_createGoogleSignIn().signOut()` so Android account picker appears on next Google sign-in |
+| 16 | `lib/services/auth_service.dart` | `resendVerificationEmail()`: throws `FirebaseAuthException(code: 'no-current-user')` when `currentUser` is null instead of silently no-oping |
+| 17 | `lib/features/auth/presentation/verify_email_screen.dart` | Added `_polling` flag shared between timer and manual check paths to prevent concurrent `reloadCurrentUser()` calls |
+| 18 | `lib/features/recommendations/presentation/recommendation_results_screen.dart` | Filter bottom sheet: `Padding` → `SingleChildScrollView` to prevent `RenderFlex overflow` on small/short Android devices |
+| 19 | `lib/features/movie_detail/presentation/movie_detail_screen.dart` | `_movie = movie` was assigned inside `build()` (undefined behavior); moved to `initState().then()` |
+| 20 | `lib/features/profile/presentation/profile_screen.dart` | Converted `StatelessWidget` → `StatefulWidget`; `_getProfileFuture(uid)` caches the future keyed on uid so Firestore isn't re-fetched on every `userChanges()` emission; added error state with retry |
+
+### P4 — UX Polish
+
+| # | File | Fix |
+|---|------|-----|
+| 21 | `lib/features/movie_detail/presentation/movie_detail_screen.dart` | Trailer launch: show SnackBar "Could not open trailer." when `launchUrl` returns false or throws |
+| 22 | `lib/features/movie_detail/presentation/movie_detail_screen.dart` | Watchlist `StreamBuilder<bool>`: added `snap.hasError` branch (shows disabled button) and loading state |
+| 23 | `lib/core/router/router.dart` | Added `errorBuilder` to `GoRouter` — shows a friendly "Page not found" screen with Go Home button |
+| 24 | `android/app/src/main/AndroidManifest.xml` | `android:label` changed from `"Filmmend Me"` to `"FilmMend Me"` to match in-app branding |
+| 25–28 | `lib/features/watchlist/presentation/watchlist_screen.dart` | Hardcoded TMDB image URL → `TmdbImageConfig.w500()`; `genres` cast → `.map((e) => e.toString())`; filter out entries with null `movieId`; `register_screen.dart` Google sign-in now mirrors login (`canPop()` → `pop(true)`) |
+
+---
+
 ## Google Sign-In + verification UX (2026-06-22)
 
 | File | Change |

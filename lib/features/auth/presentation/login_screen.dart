@@ -47,8 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go(RouteNames.home);
       }
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = AuthService.friendlyError(e));
     } catch (_) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'Google sign-in failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
@@ -56,6 +58,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleSignIn() async {
+    if (_isLoading || _isGoogleLoading) return;
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
@@ -78,8 +82,10 @@ class _LoginScreenState extends State<LoginScreen> {
         context.go(RouteNames.home);
       }
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = AuthService.friendlyError(e));
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);

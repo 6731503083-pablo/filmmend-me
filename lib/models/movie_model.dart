@@ -177,16 +177,20 @@ class MovieModel {
     if (rawGenres != null) {
       // Full detail response
       genreNames = rawGenres
-          .map((g) => (g as Map<String, dynamic>)['name'] as String)
+          .whereType<Map>()
+          .map((g) => (g['name'] as String?) ?? '')
+          .where((n) => n.isNotEmpty)
           .toList();
       genreIds = rawGenres
-          .map((g) => (g as Map<String, dynamic>)['id'] as int)
+          .whereType<Map>()
+          .map((g) => (g['id'] as num?)?.toInt() ?? 0)
+          .where((id) => id != 0)
           .toList();
     } else {
       // Discover/list response
       genreIds =
           (json['genre_ids'] as List<dynamic>?)
-              ?.map((e) => e as int)
+              ?.map((e) => (e as num).toInt())
               .toList() ??
           [];
       genreNames = genreIds
@@ -216,14 +220,16 @@ class MovieModel {
       popularity: ((json['popularity'] ?? 0) as num).toDouble(),
       productionCompanies:
           (json['production_companies'] as List<dynamic>?)
-              ?.map((c) => (c as Map<String, dynamic>)['name'] as String)
+              ?.whereType<Map<String, dynamic>>()
+              .map((c) => (c['name'] as String?) ?? '')
+              .where((n) => n.isNotEmpty)
               .toList() ??
           [],
       spokenLanguages:
           (json['spoken_languages'] as List<dynamic>?)
-              ?.map(
-                (l) => (l as Map<String, dynamic>)['english_name'] as String,
-              )
+              ?.whereType<Map<String, dynamic>>()
+              .map((l) => (l['english_name'] as String?) ?? '')
+              .where((n) => n.isNotEmpty)
               .toList() ??
           [],
       cast:

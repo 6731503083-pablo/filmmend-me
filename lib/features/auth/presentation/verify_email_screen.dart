@@ -22,6 +22,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   bool _sending = false;
   bool _checking = false;
   bool _redirecting = false;
+  bool _polling = false;
 
   @override
   void initState() {
@@ -65,8 +66,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   Future<void> _checkVerification({required bool showFeedback}) async {
-    if (_checking || _redirecting) return;
-    if (showFeedback) setState(() => _checking = true);
+    if (_checking || _redirecting || _polling) return;
+    if (showFeedback) {
+      setState(() => _checking = true);
+    } else {
+      _polling = true;
+    }
     final messenger = ScaffoldMessenger.of(context);
     try {
       final user = await AuthService().reloadCurrentUser();
@@ -98,7 +103,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         );
       }
     } finally {
-      if (mounted && showFeedback) setState(() => _checking = false);
+      if (showFeedback) {
+        if (mounted) setState(() => _checking = false);
+      } else {
+        _polling = false;
+      }
     }
   }
 

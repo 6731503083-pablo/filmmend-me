@@ -27,20 +27,34 @@ class _FilmmendMeAppState extends State<FilmmendMeApp> {
     // We run Firebase initialization and an artificial delay in parallel.
     // This guarantees our beautiful new splash animation actually has time to play
     // (Firebase usually initializes in <50ms, which skips the animation entirely!)
-    final firebaseInit = Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    //
+    // Guard against duplicate-app errors on retry: if the timeout fired while
+    // Firebase init was still in flight, a subsequent call would throw
+    // [core/duplicate-app]. Reuse the existing app when already initialized.
+    final firebaseInit = Firebase.apps.isNotEmpty
+        ? Future.value(Firebase.app())
+        : Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
 
     final minSplashDuration = Future.delayed(
       const Duration(milliseconds: 600),
     );
 
-    await Future.wait([firebaseInit, minSplashDuration]).timeout(
-      const Duration(seconds: 12),
-      onTimeout: () {
-        throw TimeoutException('Initialization timed out');
-      },
-    );
+    try {
+      await Future.wait([firebaseInit, minSplashDuration]).timeout(
+        const Duration(seconds: 12),
+        onTimeout: () {
+          throw TimeoutException('Initialization timed out');
+        },
+      );
+    } on FirebaseException catch (e) {
+      if (e.code == 'duplicate-app') {
+        // Already initialized from a previous attempt; proceed normally.
+      } else {
+        rethrow;
+      }
+    }
 
     await configureCrashlytics();
   }

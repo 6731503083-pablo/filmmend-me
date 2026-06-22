@@ -9,8 +9,24 @@ import '../../../core/widgets/widgets.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String? _cachedUid;
+  Future<UserModel?>? _profileFuture;
+
+  Future<UserModel?> _getProfileFuture(String uid) {
+    if (_cachedUid != uid) {
+      _cachedUid = uid;
+      _profileFuture = AuthService().getCurrentUserModel();
+    }
+    return _profileFuture!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +55,38 @@ class ProfileScreen extends StatelessWidget {
             );
           }
           return FutureBuilder<UserModel?>(
-            future: AuthService().getCurrentUserModel(),
+            future: _getProfileFuture(user.uid),
             builder: (context, modelSnap) {
               if (modelSnap.connectionState == ConnectionState.waiting) {
                 return const Center(
                   child: CircularProgressIndicator(color: AppColors.primary),
+                );
+              }
+              if (modelSnap.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_rounded,
+                        color: Colors.white30,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Could not load profile',
+                        style: TextStyle(color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => setState(() {
+                          _cachedUid = null;
+                        }),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
                 );
               }
               final model = modelSnap.data;
@@ -204,20 +247,21 @@ class ProfileScreen extends StatelessWidget {
                             try {
                               await AuthService().deleteAccountAndData();
                               if (!context.mounted) return;
+                              final router = GoRouter.of(context);
                               Navigator.of(context).pop();
                               messenger.showSnackBar(
                                 const SnackBar(
                                   content: Text('Account deleted.'),
                                 ),
                               );
-                              context.go(RouteNames.home);
+                              router.go(RouteNames.home);
                             } on FirebaseAuthException catch (e) {
                               if (!context.mounted) return;
                               setState(() => isDeleting = false);
                               if (e.code == 'requires-recent-login') {
+                                final router = GoRouter.of(context);
                                 Navigator.of(context).pop();
                                 await AuthService().signOut();
-                                if (!context.mounted) return;
                                 messenger.showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -225,7 +269,7 @@ class ProfileScreen extends StatelessWidget {
                                     ),
                                   ),
                                 );
-                                context.go(RouteNames.login);
+                                router.go(RouteNames.login);
                               } else {
                                 messenger.showSnackBar(
                                   const SnackBar(
@@ -320,11 +364,12 @@ class ProfileScreen extends StatelessWidget {
               width: double.infinity,
               child: AdaptiveButton(
                 onPressed: () async {
+                  final router = GoRouter.of(context);
                   await AuthService().signOut();
                   if (context.mounted) {
-                    context.pop();
-                    context.go(RouteNames.home);
+                    Navigator.of(context).pop();
                   }
+                  router.go(RouteNames.home);
                 },
                 label: 'Log Out',
                 style: AdaptiveButtonStyle.filled,

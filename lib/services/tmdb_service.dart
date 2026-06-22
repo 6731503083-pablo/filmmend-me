@@ -445,12 +445,23 @@ class TmdbService {
     ).replace(queryParameters: {'query': normalizedQuery, 'page': '$page'});
 
     return _getOrFetchList(cacheKey, _searchCacheTtl, () async {
-      final response = await _getWithRetry(uri);
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final results = data['results'] as List<dynamic>;
-      return results
-          .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      try {
+        final response = await _getWithRetry(uri);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final results = data['results'] as List<dynamic>? ?? const [];
+        return results
+            .whereType<Map<String, dynamic>>()
+            .map(MovieModel.fromJson)
+            .toList();
+      } on TmdbException {
+        rethrow;
+      } catch (_) {
+        throw const TmdbException(
+          statusCode: 0,
+          message: 'Could not parse search results. Please try again.',
+          kind: TmdbFailureKind.client,
+        );
+      }
     });
   }
 
@@ -470,12 +481,23 @@ class TmdbService {
     );
 
     return _getOrFetchList(cacheKey, _popularCacheTtl, () async {
-      final response = await _getWithRetry(uri);
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final results = data['results'] as List<dynamic>;
-      return results
-          .map((e) => MovieModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      try {
+        final response = await _getWithRetry(uri);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final results = data['results'] as List<dynamic>? ?? const [];
+        return results
+            .whereType<Map<String, dynamic>>()
+            .map(MovieModel.fromJson)
+            .toList();
+      } on TmdbException {
+        rethrow;
+      } catch (_) {
+        throw const TmdbException(
+          statusCode: 0,
+          message: 'Could not parse popular movies. Please try again.',
+          kind: TmdbFailureKind.client,
+        );
+      }
     });
   }
 

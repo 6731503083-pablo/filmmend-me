@@ -130,7 +130,14 @@ class AuthService {
 
   /// Resend email verification
   Future<void> resendVerificationEmail() async {
-    await _auth.currentUser?.sendEmailVerification();
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'No signed-in user found. Please log in again.',
+      );
+    }
+    await user.sendEmailVerification();
   }
 
   /// Reload current user to refresh emailVerified and profile fields
@@ -141,12 +148,19 @@ class AuthService {
     return _auth.currentUser;
   }
 
-  /// Sign out
+  /// Sign out (signs out of both Firebase Auth and Google Sign-In)
   Future<void> signOut() async {
+    try {
+      await _createGoogleSignIn().signOut();
+    } catch (_) {
+      // Google Sign-In may not be active; proceed with Firebase sign-out.
+    }
     await _auth.signOut();
   }
 
-  /// Delete account and associated data
+  /// Delete account and associated data.
+  /// Auth user is deleted first so a failed delete does not leave an
+  /// orphaned account whose Firestore data has already been wiped.
   Future<void> deleteAccountAndData() async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -156,9 +170,9 @@ class AuthService {
       );
     }
     final userDoc = _firestore.collection('users').doc(user.uid);
+    await user.delete();
     await _deleteCollection(userDoc.collection('watchlist'));
     await userDoc.delete();
-    await user.delete();
   }
 
   Future<void> _deleteCollection(

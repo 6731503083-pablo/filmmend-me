@@ -17,7 +17,16 @@ class UserModel {
 
   /// Create from Firestore document
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      return UserModel(
+        uid: doc.id,
+        email: '',
+        displayName: 'Film Lover',
+        photoUrl: null,
+        createdAt: DateTime.now(),
+      );
+    }
     return UserModel(
       uid: doc.id,
       email: data['email'] as String? ?? '',

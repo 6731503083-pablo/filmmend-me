@@ -23,6 +23,42 @@ final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: RouteNames.home,
 
+  errorBuilder: (context, state) => Scaffold(
+    backgroundColor: const Color(0xFF0A0E21),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Color(0xFF06B6D4)),
+            const SizedBox(height: 16),
+            const Text(
+              'Page not found',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Sorry, this page could not be opened.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xB3FFFFFF)),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => context.go(RouteNames.home),
+              icon: const Icon(Icons.home_rounded),
+              label: const Text('Go Home'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  ),
+
   routes: [
     // Splash screen (outside shell)
     GoRoute(
@@ -43,7 +79,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: RouteNames.verifyEmail,
       builder: (context, state) {
-        final email = state.extra as String?;
+        final email = state.extra is String ? state.extra as String : null;
         final fallbackEmail = safeCurrentUser()?.email ?? '';
         return VerifyEmailScreen(email: email ?? fallbackEmail);
       },
@@ -83,10 +119,11 @@ final GoRouter appRouter = GoRouter(
                   path: RouteNames.recommendations,
                   parentNavigatorKey: _rootNavigatorKey,
                   builder: (context, state) {
-                    final extra = state.extra as Map<String, dynamic>?;
+                    final extra = state.extra;
+                    final map = extra is Map ? extra : null;
                     return RecommendationResultsScreen(
-                      mood: extra?['mood'] as String?,
-                      minMinutes: extra?['time'] as int?,
+                      mood: map?['mood'] as String?,
+                      minMinutes: (map?['time'] as num?)?.toInt(),
                     );
                   },
                 ),

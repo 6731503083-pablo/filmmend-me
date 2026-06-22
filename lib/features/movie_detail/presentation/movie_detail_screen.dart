@@ -32,6 +32,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   void initState() {
     super.initState();
     _movieFuture = _loadMovieDetails();
+    _movieFuture.then((movie) {
+      if (mounted) setState(() => _movie = movie);
+    }).catchError((_) {});
   }
 
   Future<MovieModel> _loadMovieDetails() {
@@ -67,7 +70,13 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   Icons.arrow_back,
                   color: AppColors.textPrimary,
                 ),
-                onPressed: () => context.pop(),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(RouteNames.home);
+                  }
+                },
               ),
             ),
             body: Center(
@@ -117,7 +126,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   Widget _buildDetail(BuildContext context, MovieModel movie) {
-    _movie = movie;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -223,10 +231,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             color: Colors.black.withValues(alpha: 0.5),
             shape: BoxShape.circle,
           ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-            onPressed: () => context.pop(),
-          ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(RouteNames.home);
+                }
+              },
+            ),
         ),
       ),
       actions: [
@@ -388,18 +402,30 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   : () async {
                       if (_movie == null) return;
                       setState(() => _isWatchlistBusy = true);
+                      final messenger = ScaffoldMessenger.of(context);
                       try {
                         await context.push<bool>(RouteNames.login);
-                        if (!mounted || safeCurrentUser() == null) return;
+                        final loggedInUser = safeCurrentUser();
+                        if (!mounted || loggedInUser == null) return;
+                        if (!loggedInUser.emailVerified) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please verify your email before adding to Watchlist.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
 
                         final ws = WatchlistService();
                         final movieId = widget.movieId;
                         final alreadyInWatchlist = await ws.isInWatchlist(
                           movieId,
                         );
+                        if (!mounted) return;
                         if (alreadyInWatchlist) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Already in your watchlist.'),
                             ),
@@ -417,13 +443,13 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                           runtime: _movie!.runtimeFormatted,
                         );
 
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        if (!mounted) return;
+                        messenger.showSnackBar(
                           const SnackBar(content: Text('Added to watchlist.')),
                         );
                       } catch (_) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        if (!mounted) return;
+                        messenger.showSnackBar(
                           const SnackBar(
                             content: Text(
                               'Could not update watchlist. Please try again.',
@@ -486,6 +512,27 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         return StreamBuilder<bool>(
           stream: ws.watchlistStatus(movieId),
           builder: (context, snap) {
+            if (snap.hasError) {
+              return const SizedBox(
+                width: double.infinity,
+                child: AdaptiveButton(
+                  onPressed: null,
+                  label: 'Watchlist unavailable',
+                  style: AdaptiveButtonStyle.filled,
+                ),
+              );
+            }
+            if (snap.connectionState == ConnectionState.waiting &&
+                snap.data == null) {
+              return const SizedBox(
+                width: double.infinity,
+                child: AdaptiveButton(
+                  onPressed: null,
+                  label: 'Loading...',
+                  style: AdaptiveButtonStyle.filled,
+                ),
+              );
+            }
             final inWatchlist = snap.data ?? false;
             return SizedBox(
               width: double.infinity,
@@ -721,16 +768,19 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     return GestureDetector(
       onTap: () async {
         final uri = Uri.parse(trailer.youtubeUrl);
+        bool opened = false;
         try {
-          final launched = await launchUrl(
-            uri,
-            mode: LaunchMode.externalApplication,
-          );
-          if (!launched) {
-            await launchUrl(uri, mode: LaunchMode.platformDefault);
+          opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (!opened) {
+            opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
           }
-        } catch (e) {
-          debugPrint('Could not launch trailer: $e');
+        } catch (_) {
+          opened = false;
+        }
+        if (!opened && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open trailer.')),
+          );
         }
       },
       child: Container(

@@ -5,6 +5,7 @@ import '../../../core/firebase/firebase_safe.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../../models/movie_model.dart';
 import '../../../services/watchlist_service.dart';
 
 class WatchlistScreen extends StatefulWidget {
@@ -118,13 +119,19 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                   ),
                 );
               }
+              // Filter out any entries with a missing movieId to avoid
+              // broken Dismissible keys and invalid navigation targets.
+              final validMovies = movies
+                  .where((m) => m['movieId'] != null)
+                  .toList();
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: movies.length,
+                itemCount: validMovies.length,
                 itemBuilder: (context, index) {
-                  final movie = movies[index];
+                  final movie = validMovies[index];
+                  final movieId = movie['movieId'].toString();
                   return Dismissible(
-                    key: Key(movie['movieId'].toString()),
+                    key: Key(movieId),
                     direction: DismissDirection.endToStart,
                     background: Container(
                       alignment: Alignment.centerRight,
@@ -136,33 +143,41 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                       ),
                       child: const Icon(Icons.delete, color: Colors.red),
                     ),
-                    onDismissed: (_) {
-                      final movieId = movie['movieId'].toString();
-                      ws.removeMovie(movieId).catchError((_) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Could not remove from watchlist. Please try again.',
+                    confirmDismiss: (_) async {
+                      try {
+                        await ws.removeMovie(movieId);
+                        return true;
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Could not remove from watchlist. Please try again.',
+                              ),
                             ),
-                          ),
-                        );
-                      });
+                          );
+                        }
+                        return false;
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: MovieCard(
                         title: movie['title'] ?? 'Unknown',
                         posterUrl: movie['posterPath'] != null
-                            ? 'https://image.tmdb.org/t/p/w500${movie['posterPath']}'
+                            ? TmdbImageConfig.w500(
+                                movie['posterPath'] as String,
+                              )
                             : '',
                         rating: (movie['rating'] as num?)?.toDouble() ?? 0.0,
                         runtime: movie['runtime'] ?? '',
-                        genres:
-                            (movie['genres'] as List?)?.cast<String>() ?? [],
+                        genres: (movie['genres'] as List?)
+                                ?.map((e) => e.toString())
+                                .toList() ??
+                            [],
                         onTap: () {
                           context.push(
-                            '/${RouteNames.movieDetail}/${movie['movieId']}',
+                            '/${RouteNames.movieDetail}/$movieId',
                           );
                         },
                       ),

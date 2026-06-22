@@ -43,10 +43,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final user = await _authService.signInWithGoogle();
       if (!mounted) return;
       if (user == null) return;
-      context.go(RouteNames.home);
+      // Mirror login_screen: pop with result when pushed as a modal, else go home.
+      if (context.canPop()) {
+        context.pop(true);
+      } else {
+        context.go(RouteNames.home);
+      }
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = AuthService.friendlyError(e));
     } catch (_) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'Google sign-in failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
@@ -54,6 +61,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    if (_isLoading || _isGoogleLoading) return;
+
     final displayName = _displayNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -77,8 +86,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       context.go(RouteNames.verifyEmail, extra: email);
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = AuthService.friendlyError(e));
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
