@@ -238,6 +238,65 @@ The app is optimized for **native iOS polish** and a **simple, direct codebase**
 
 ---
 
+## Emulator Testing (Pre–Play Store)
+
+### Run commands
+
+**Debug** (uses bundled `.env` for TMDB when present):
+
+```bash
+flutter run -d android
+```
+
+**Release APK on emulator** (matches Play minification; TMDB requires token at build time):
+
+```bash
+flutter build apk --release --dart-define=TMDB_READ_TOKEN=YOUR_TOKEN
+adb uninstall com.filmmend.me   # required when switching debug ↔ release signing
+adb install build/app/outputs/flutter-apk/app-release.apk
+```
+
+**Play upload artifact:**
+
+```bash
+flutter build appbundle --release --dart-define=TMDB_READ_TOKEN=YOUR_TOKEN
+```
+
+### Manual test checklist
+
+| Area | Steps | Pass criteria |
+|------|--------|----------------|
+| **Startup** | Cold launch | Splash → home; no crash |
+| **Home** | Pick mood + runtime → Get recommendations | Results load with posters and “why picked” text |
+| **Movie detail** | Tap a card | Detail, cast, trailer link open |
+| **Auth** | Register → verify email flow | Verification screen blocks back; resend works |
+| **Watchlist** | Logged out → tab | `LoginRequiredView`; after login + verify, add/remove movie |
+| **Profile** | Logout, delete account (test account) | Navigates correctly; `requires-recent-login` signs out to login |
+| **Back** | System back on tabs / detail | Predictive back behaves; no stuck routes |
+| **Release build** | Install release APK | App opens; recommendations work (token was passed at build) |
+
+### Known emulator pitfalls
+
+- **WiFi after wipe** — DNS fails until WiFi connects (~30–60s after cold boot). `ping google.com` from adb is a quick check; enable WiFi or wait before testing API flows.
+- **No DNS / offline Firestore** — if WiFi never connects, logs show `Unable to resolve host`; use **Cold Boot Now** or recreate the AVD.
+- **Debug vs release signing** — `INSTALL_FAILED_UPDATE_INCOMPATIBLE` → `adb uninstall com.filmmend.me` first.
+- **`.env`** — listed in `pubspec.yaml` assets for debug; release/Android store builds still need `--dart-define=TMDB_READ_TOKEN=...`.
+- **Lag on low-RAM Macs** — 8 GB total RAM forces software GPU rendering; use `flutter run --release -d android` for smoother emulator runs, or prefer a lighter AVD (below).
+
+### Recommended AVD (no physical device)
+
+On memory-tight Macs (e.g. 8 GB), avoid **API 37 + 16 KB (ps16k)** images — they are heavy. Prefer:
+
+| Setting | Value |
+|---------|--------|
+| Device | Pixel 6 (or similar) |
+| System image | **API 34 or 35**, Google Play — **not** “16 KB Page Size” |
+| AVD RAM | **2048 MB** (not 4096+ on 8 GB hosts) |
+
+Create via **Android Studio → Device Manager → Create Device**. No phone required for dev; use Play **Internal testing** for a final install check on any borrowed Android device before production.
+
+---
+
 ## Play Store Readiness
 
 A full readiness audit was completed on 2026-06-22. The app is **upload-ready** for Android Play Store.
@@ -268,6 +327,18 @@ A full readiness audit was completed on 2026-06-22. The app is **upload-ready** 
 | `docs/ai-context.md` | Documented Cursor Gradle sync / JDK setup (this section) |
 
 No changes to `android/build.gradle.kts` — root Gradle script is standard Flutter boilerplate; red IDE errors were JDK configuration only.
+
+---
+
+## Pre–Play Store Emulator Pass (2026-06-22)
+
+| File | Change |
+|------|--------|
+| `pubspec.yaml` | Added `.env` to Flutter assets so `dotenv.load` works in debug/emulator runs |
+| `lib/features/auth/presentation/verify_email_screen.dart` | Replaced deprecated `WillPopScope` with `PopScope(canPop: false)` for Android predictive back |
+| `docs/ai-context.md` | Emulator test commands, checklist, and pitfalls (section above) |
+
+**Automated checks:** `flutter analyze` clean; debug APK installed on emulator (API 37); `flutter build apk --release` succeeds with R8 minification. Manual UI pass pending on a lighter AVD (user creating API 34/35 emulator).
 
 ---
 

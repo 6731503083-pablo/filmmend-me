@@ -111,8 +111,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Widget build(BuildContext context) {
     final email = widget.email.trim().isEmpty ? 'your email' : widget.email;
 
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
