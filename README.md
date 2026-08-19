@@ -68,7 +68,7 @@ The app features a beautiful dark theme with iOS 26 native components, including
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/6731503083-pablo/filmmend-me.git
+git clone https://github.com/phyowaiyanlinzaw/filmmend-me.git
 cd filmmend-me
 ```
 
@@ -209,7 +209,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 👨‍💻 Author
 
-Pablo - [GitHub](https://github.com/6731503083-pablo)
+Pablo - [GitHub](https://github.com/phyowaiyanlinzaw)
 
 ## 🙏 Acknowledgments
 
